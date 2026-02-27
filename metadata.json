@@ -1,0 +1,8 @@
+{
+  "name": "GP OBRA - Command Center",
+  "description": "Painel de controle premium para gestão de obras com visão 3D, financeiro e chat em tempo real.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-[#0a0b0d] text-white;
+  }
+}
+
+@layer components {
+  .nav-btn-active {
+    @apply text-[#ffb7c5] shadow-[0_0_10px_rgba(255,183,197,0.3)];
+  }
+}
