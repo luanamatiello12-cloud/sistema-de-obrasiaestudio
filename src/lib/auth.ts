@@ -24,8 +24,21 @@ function demoUser(email: string): UserState {
  * Se o Auth não estiver configurado ainda, cai no modo DEMO (comportamento
  * antigo), sinalizado visualmente na interface.
  */
+/** Espera no máximo `ms`; se estourar, resolve com `fallback` (backend indisponível/lento). */
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise.catch(() => fallback),
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
 export async function login(email: string, password: string): Promise<LoginResult> {
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  // Tenta o Auth real, mas não trava se o backend estiver fora do ar/lento.
+  const { data, error } = await withTimeout(
+    sb.auth.signInWithPassword({ email, password }),
+    3500,
+    { data: { user: null }, error: { message: 'timeout' } } as any
+  );
 
   if (!error && data.user) {
     let role: UserState['role'] = 'CLIENTE';
