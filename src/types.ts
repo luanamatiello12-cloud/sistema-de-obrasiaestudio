@@ -2,10 +2,12 @@ export interface UserState {
   email: string;
   role: 'ADMIN' | 'CLIENTE';
   avatar: string | null;
+  /** true quando o login caiu no modo demonstração (Supabase Auth não configurado) */
+  demo?: boolean;
 }
 
 export interface ChatMessage {
-  id?: number;
+  id?: number | string;
   autor: string;
   mensagem?: string;
   midia_url?: string;
@@ -49,8 +51,8 @@ export interface Hotspot {
   id: number;
   nome_comodo: string;
   url_foto_interna: string;
-  pos_x: string;
-  pos_y: string;
+  pos_x: string | number;
+  pos_y: string | number;
 }
 
 export interface Notification {
