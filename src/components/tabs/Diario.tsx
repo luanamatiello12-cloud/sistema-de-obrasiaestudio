@@ -1,4 +1,6 @@
 import { motion } from 'motion/react';
+import { FileText } from 'lucide-react';
+import { EmptyState } from '../Skeleton';
 import type { DiarioItem, UserState } from '../../types';
 
 interface Props {
@@ -27,6 +29,13 @@ export default function Diario({ user, diario, onNewRelato }: Props) {
           </button>
         )}
       </div>
+      {diario.length === 0 && (
+        <EmptyState
+          icon={<FileText size={44} />}
+          title="Nenhum relato ainda"
+          hint="Os relatos diários da obra aparecerão aqui."
+        />
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {diario.map((item) => (
           <div

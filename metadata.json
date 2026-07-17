@@ -1,6 +1,6 @@
 {
-  "name": "GP OBRA - Command Center",
-  "description": "Painel de controle premium para gestão de obras com visão 3D, financeiro e chat em tempo real.",
+  "name": "GP:OBRA — Central de Obras",
+  "description": "Central de comando para gestão de obras: cronograma, financeiro, diário, materiais, planta técnica com raio-X e chat em tempo real.",
   "requestFramePermissions": [
     "camera",
     "microphone"

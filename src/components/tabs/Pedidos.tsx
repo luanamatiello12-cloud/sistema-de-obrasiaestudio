@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
-import { CheckCircle, Download, Trash2 } from 'lucide-react';
-import { generateMateriaisReport } from '../../lib/reports';
+import { CheckCircle, Download, Package, Trash2 } from 'lucide-react';
+import { EmptyState } from '../Skeleton';
 import type { PedidoMaterial, UserState } from '../../types';
 
 interface Props {
@@ -25,7 +25,8 @@ export default function Pedidos({ user, pedidos, onNewPedido, onApprove, onDelet
         <h2 className="text-4xl md:text-5xl font-black uppercase italic">Materiais</h2>
         <div className="flex gap-3">
           <button
-            onClick={() => {
+            onClick={async () => {
+              const { generateMateriaisReport } = await import('../../lib/reports');
               generateMateriaisReport(pedidos);
               onNotify('Relatório de Materiais gerado!', 'success');
             }}
@@ -43,6 +44,13 @@ export default function Pedidos({ user, pedidos, onNewPedido, onApprove, onDelet
           )}
         </div>
       </div>
+      {pedidos.length === 0 && (
+        <EmptyState
+          icon={<Package size={44} />}
+          title="Nenhum pedido de material"
+          hint="As solicitações de material aparecerão aqui."
+        />
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {pedidos.map((p) => (
           <div

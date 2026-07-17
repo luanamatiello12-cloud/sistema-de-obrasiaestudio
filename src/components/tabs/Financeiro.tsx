@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
-import { Download } from 'lucide-react';
-import { generateFinanceiroReport } from '../../lib/reports';
+import { Download, DollarSign } from 'lucide-react';
+import { EmptyState } from '../Skeleton';
 import { formatBRL } from '../../utils';
 import type { FinanceiroItem } from '../../types';
 
@@ -24,7 +24,8 @@ export default function Financeiro({ financeiro, onNotify }: Props) {
         <h2 className="text-4xl md:text-5xl font-black uppercase italic">Financeiro</h2>
         <div className="flex items-center gap-4">
           <button
-            onClick={() => {
+            onClick={async () => {
+              const { generateFinanceiroReport } = await import('../../lib/reports');
               generateFinanceiroReport(financeiro);
               onNotify('Relatório Financeiro gerado!', 'success');
             }}
@@ -38,6 +39,13 @@ export default function Financeiro({ financeiro, onNotify }: Props) {
           </div>
         </div>
       </div>
+      {financeiro.length === 0 ? (
+        <EmptyState
+          icon={<DollarSign size={44} />}
+          title="Nenhum lançamento ainda"
+          hint="Os lançamentos financeiros da obra aparecerão aqui."
+        />
+      ) : (
       <div className="bg-[#14161a] rounded-[2.5rem] overflow-hidden border border-white/5">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -71,6 +79,7 @@ export default function Financeiro({ financeiro, onNotify }: Props) {
           </table>
         </div>
       </div>
+      )}
     </motion.section>
   );
 }

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Calendar, Plus, X } from 'lucide-react';
-import { STORAGE_URL } from '../../lib/supabase';
+import { plantaAssets } from '../../lib/assets';
 import type { CronogramaItem, Hotspot, UserState } from '../../types';
 
 const LAYERS = [
-  { key: 'hidraulica', file: 'hidraulica%20(2).jpg' },
-  { key: 'eletrica', file: 'eletrica.jpg' },
-  { key: 'clima', file: 'climatizaca.jpg' },
+  { key: 'hidraulica', label: 'Hidráulica' },
+  { key: 'eletrica', label: 'Elétrica' },
+  { key: 'clima', label: 'Climatização' },
 ] as const;
 
 type LayerKey = (typeof LAYERS)[number]['key'];
@@ -37,6 +37,7 @@ export default function Projeto({
     clima: false,
   });
   const [placing, setPlacing] = useState(false);
+  const planta = plantaAssets();
 
   const isAnyLayerActive = layers.hidraulica || layers.eletrica || layers.clima;
   const totalProgress = (cronograma.reduce((acc, c) => acc + c.progresso, 0) / (cronograma.length || 1)).toFixed(1);
@@ -87,7 +88,7 @@ export default function Projeto({
             onClick={handlePlantClick}
           >
             <img
-              src={`${STORAGE_URL}/planta%20base.png`}
+              src={planta.base}
               alt="Planta baixa da obra"
               className={`max-w-full max-h-[600px] object-contain transition-opacity duration-500 ${
                 isAnyLayerActive ? 'opacity-20' : 'opacity-100'
@@ -97,8 +98,8 @@ export default function Projeto({
             {LAYERS.map((l) => (
               <img
                 key={l.key}
-                src={`${STORAGE_URL}/${l.file}`}
-                alt={`Camada ${l.key}`}
+                src={planta[l.key]}
+                alt={`Camada ${l.label}`}
                 className={`absolute inset-0 w-full h-full object-contain mix-blend-screen transition-opacity duration-500 pointer-events-none ${
                   layers[l.key] ? 'opacity-100' : 'opacity-0'
                 }`}
@@ -153,7 +154,7 @@ export default function Projeto({
                     onChange={() => setLayers((prev) => ({ ...prev, [l.key]: !prev[l.key] }))}
                     checked={layers[l.key]}
                   />
-                  {l.key}
+                  {l.label}
                 </label>
               ))}
             </div>

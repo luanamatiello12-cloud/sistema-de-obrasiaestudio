@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { MessageSquare } from 'lucide-react';
-import { sb } from './lib/supabase';
+import * as db from './lib/data';
 import { getStoredSession, logout as doLogout, storeSession, updatePassword } from './lib/auth';
 import { useObraData } from './hooks/useObraData';
 import { uid } from './utils';
@@ -13,6 +13,7 @@ import Projeto from './components/tabs/Projeto';
 import Financeiro from './components/tabs/Financeiro';
 import Diario from './components/tabs/Diario';
 import Pedidos from './components/tabs/Pedidos';
+import { SkeletonCards, SkeletonProjeto } from './components/Skeleton';
 import {
   CompraModal,
   ConfirmModal,
@@ -137,9 +138,9 @@ export default function App() {
 
   const handleSaveCrono = async (progresso: number) => {
     if (!editingCrono) return;
-    const { error } = await sb.from('obra_cronograma').update({ progresso }).eq('id', editingCrono.id);
+    const { error } = await db.updateCronograma(editingCrono.id, progresso);
     if (error) {
-      addNotification('Erro ao atualizar cronograma: ' + error.message, 'warning');
+      addNotification('Erro ao atualizar cronograma: ' + error, 'warning');
     } else {
       addNotification('Cronograma atualizado!', 'success');
       setEditingCrono(null);
@@ -149,22 +150,12 @@ export default function App() {
 
   const handleFinalizarCompra = async (valor: number, cupomUrl: string) => {
     if (!approvingPedido) return;
-    const pedidoId = approvingPedido.id;
-
-    const { error: finError } = await sb.from('obra_financeiro').insert([
-      { descricao: `COMPRA: ${approvingPedido.material}`, valor_pago: valor, cupom_url: cupomUrl },
-    ]);
-    if (finError) {
-      addNotification('Erro ao lançar no financeiro: ' + finError.message, 'warning');
+    const { error } = await db.finalizarCompra(approvingPedido, valor, cupomUrl);
+    if (error) {
+      addNotification('Erro ao finalizar compra: ' + error, 'warning');
       return;
     }
-
-    const { error: pedError } = await sb.from('pedidos_materiais').update({ status: 'aprovado' }).eq('id', pedidoId);
-    if (pedError) {
-      addNotification('Compra lançada, mas houve erro ao aprovar o pedido: ' + pedError.message, 'warning');
-    } else {
-      addNotification('Compra finalizada e lançada no financeiro!', 'success');
-    }
+    addNotification('Compra finalizada e lançada no financeiro!', 'success');
     setApprovingPedido(null);
     data.reloadPedidos();
     data.reloadFinanceiro();
@@ -175,8 +166,8 @@ export default function App() {
       title: 'Excluir Pedido',
       message: 'Deseja realmente excluir este pedido de material?',
       onConfirm: async () => {
-        const { error } = await sb.from('pedidos_materiais').delete().eq('id', id);
-        if (error) addNotification('Erro ao excluir pedido: ' + error.message, 'warning');
+        const { error } = await db.deletePedido(id);
+        if (error) addNotification('Erro ao excluir pedido: ' + error, 'warning');
         else {
           addNotification('Pedido excluído!', 'success');
           data.reloadPedidos();
@@ -190,8 +181,8 @@ export default function App() {
       title: 'Excluir Ponto',
       message: 'Deseja realmente excluir este ponto de Raio-X?',
       onConfirm: async () => {
-        const { error } = await sb.from('pontos_tecnicos').delete().eq('id', id);
-        if (error) addNotification('Erro ao excluir ponto: ' + error.message, 'warning');
+        const { error } = await db.deleteHotspot(id);
+        if (error) addNotification('Erro ao excluir ponto: ' + error, 'warning');
         else {
           addNotification('Ponto de Raio-X excluído!', 'success');
           data.reloadHotspots();
@@ -202,11 +193,14 @@ export default function App() {
 
   const handleCreateHotspot = async (nome: string, fotoUrl: string) => {
     if (!placingHotspot) return;
-    const { error } = await sb.from('pontos_tecnicos').insert([
-      { nome_comodo: nome, url_foto_interna: fotoUrl, pos_x: placingHotspot.x, pos_y: placingHotspot.y },
-    ]);
+    const { error } = await db.createHotspot({
+      nome_comodo: nome,
+      url_foto_interna: fotoUrl,
+      pos_x: placingHotspot.x,
+      pos_y: placingHotspot.y,
+    });
     if (error) {
-      addNotification('Erro ao criar ponto: ' + error.message, 'warning');
+      addNotification('Erro ao criar ponto: ' + error, 'warning');
     } else {
       addNotification('Ponto de Raio-X criado!', 'success');
       setPlacingHotspot(null);
@@ -216,11 +210,13 @@ export default function App() {
 
   const handlePublishDiario = async (texto: string, midiaUrl: string | null) => {
     if (!user) return;
-    const { error } = await sb
-      .from('diario_obra')
-      .insert([{ autor: user.email, descricao: texto, ...(midiaUrl ? { midia_url: midiaUrl } : {}) }]);
+    const { error } = await db.createDiario({
+      autor: user.email,
+      descricao: texto,
+      ...(midiaUrl ? { midia_url: midiaUrl } : {}),
+    });
     if (error) {
-      addNotification('Erro ao publicar relato: ' + error.message, 'warning');
+      addNotification('Erro ao publicar relato: ' + error, 'warning');
     } else {
       addNotification('Relato publicado!', 'success');
       setShowDiarioModal(false);
@@ -229,11 +225,9 @@ export default function App() {
   };
 
   const handleCreatePedido = async (material: string, quantidade: string, urgencia: string) => {
-    const { error } = await sb
-      .from('pedidos_materiais')
-      .insert([{ material, quantidade, status: 'pendente', urgencia }]);
+    const { error } = await db.createPedido({ material, quantidade, status: 'pendente', urgencia });
     if (error) {
-      addNotification('Erro ao enviar solicitação: ' + error.message, 'warning');
+      addNotification('Erro ao enviar solicitação: ' + error, 'warning');
     } else {
       addNotification('Solicitação enviada!', 'success');
       setShowPedidoModal(false);
@@ -253,32 +247,44 @@ export default function App() {
 
           <main className="flex-1 p-6 md:p-12 max-w-[1600px] mx-auto w-full">
             <AnimatePresence mode="wait">
-              {activeTab === 'projeto3d' && (
-                <Projeto
-                  key="projeto"
-                  user={user}
-                  hotspots={data.hotspots}
-                  cronograma={data.cronograma}
-                  onOpenRaioX={(tit, url) => setShowRaioX({ tit, url })}
-                  onEditCrono={setEditingCrono}
-                  onDeleteHotspot={handleDeleteHotspot}
-                  onPlaceHotspot={(x, y) => setPlacingHotspot({ x, y })}
-                />
-              )}
-              {activeTab === 'financeiro' && <Financeiro key="financeiro" financeiro={data.financeiro} onNotify={addNotification} />}
-              {activeTab === 'diario' && (
-                <Diario key="diario" user={user} diario={data.diario} onNewRelato={() => setShowDiarioModal(true)} />
-              )}
-              {activeTab === 'pedidos' && (
-                <Pedidos
-                  key="pedidos"
-                  user={user}
-                  pedidos={data.pedidos}
-                  onNewPedido={() => setShowPedidoModal(true)}
-                  onApprove={setApprovingPedido}
-                  onDelete={handleDeletePedido}
-                  onNotify={addNotification}
-                />
+              {data.loading ? (
+                activeTab === 'projeto3d' ? (
+                  <SkeletonProjeto key="skel-proj" />
+                ) : (
+                  <SkeletonCards key="skel-cards" />
+                )
+              ) : (
+                <>
+                  {activeTab === 'projeto3d' && (
+                    <Projeto
+                      key="projeto"
+                      user={user}
+                      hotspots={data.hotspots}
+                      cronograma={data.cronograma}
+                      onOpenRaioX={(tit, url) => setShowRaioX({ tit, url })}
+                      onEditCrono={setEditingCrono}
+                      onDeleteHotspot={handleDeleteHotspot}
+                      onPlaceHotspot={(x, y) => setPlacingHotspot({ x, y })}
+                    />
+                  )}
+                  {activeTab === 'financeiro' && (
+                    <Financeiro key="financeiro" financeiro={data.financeiro} onNotify={addNotification} />
+                  )}
+                  {activeTab === 'diario' && (
+                    <Diario key="diario" user={user} diario={data.diario} onNewRelato={() => setShowDiarioModal(true)} />
+                  )}
+                  {activeTab === 'pedidos' && (
+                    <Pedidos
+                      key="pedidos"
+                      user={user}
+                      pedidos={data.pedidos}
+                      onNewPedido={() => setShowPedidoModal(true)}
+                      onApprove={setApprovingPedido}
+                      onDelete={handleDeletePedido}
+                      onNotify={addNotification}
+                    />
+                  )}
+                </>
               )}
             </AnimatePresence>
           </main>

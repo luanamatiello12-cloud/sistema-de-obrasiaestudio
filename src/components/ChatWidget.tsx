@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Camera, MessageSquare, Send, X } from 'lucide-react';
-import { sb } from '../lib/supabase';
+import { sendChatMessage } from '../lib/data';
 import { uploadImage } from '../lib/upload';
 import { uid } from '../utils';
 import type { ChatMessage, UserState } from '../types';
@@ -43,10 +43,10 @@ export default function ChatWidget({ user, open, onToggle, messages, setMessages
     setMessages((prev) => [...prev, optimisticMsg]);
     input.value = '';
 
-    const { error } = await sb.from('chat_mensagens').insert([{ autor: user.email, mensagem: val }]);
+    const { error } = await sendChatMessage({ autor: user.email, mensagem: val });
     if (error) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
-      onNotify('Erro ao enviar: ' + error.message, 'warning');
+      onNotify('Erro ao enviar: ' + error, 'warning');
       input.value = val;
     }
   };
@@ -70,7 +70,7 @@ export default function ChatWidget({ user, open, onToggle, messages, setMessages
     };
     setMessages((prev) => [...prev, optimisticMsg]);
 
-    const { error } = await sb.from('chat_mensagens').insert([{ autor: user.email, midia_url: url }]);
+    const { error } = await sendChatMessage({ autor: user.email, midia_url: url });
     if (error) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
       onNotify('Erro ao enviar foto', 'warning');

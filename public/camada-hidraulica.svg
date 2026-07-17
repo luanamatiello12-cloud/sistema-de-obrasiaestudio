@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <style>
+      .pipe { stroke: #38bdf8; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: none; filter: drop-shadow(0 0 4px #38bdf8); }
+      .pipe-hot { stroke: #f87171; stroke-width: 4; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 4px #f87171); }
+      .node { fill: #38bdf8; filter: drop-shadow(0 0 5px #38bdf8); }
+      .tag { fill: #7dd3fc; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; }
+    </style>
+  </defs>
+
+  <!-- Coluna de água fria -->
+  <path class="pipe" d="M620 100 L620 470 L320 470 L320 380" />
+  <path class="pipe" d="M620 300 L680 300 L680 350" />
+  <path class="pipe" d="M320 470 L150 470 L150 400" />
+
+  <!-- Água quente -->
+  <path class="pipe-hot" d="M600 110 L600 460 L330 460 L330 385" />
+
+  <!-- Pontos hidráulicos -->
+  <circle cx="620" cy="100" r="6" class="node" />
+  <circle cx="680" cy="350" r="6" class="node" />
+  <circle cx="320" cy="380" r="6" class="node" />
+  <circle cx="150" cy="400" r="6" class="node" />
+
+  <text x="630" y="95" class="tag">Coluna AF/AQ</text>
+  <text x="690" y="355" class="tag">Tanque</text>
+  <text x="290" y="375" class="tag">Chuveiro</text>
+  <text x="120" y="395" class="tag">Suíte</text>
+</svg>

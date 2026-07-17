@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <style>
+      .wire { stroke: #facc15; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 2 8; fill: none; filter: drop-shadow(0 0 4px #facc15); }
+      .point { fill: #fde047; filter: drop-shadow(0 0 5px #facc15); }
+      .tag { fill: #fde047; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; }
+    </style>
+  </defs>
+
+  <!-- Quadro de distribuição -->
+  <rect x="100" y="90" width="26" height="20" fill="none" stroke="#facc15" stroke-width="3" filter="drop-shadow(0 0 4px #facc15)" />
+
+  <!-- Circuitos -->
+  <path class="wire" d="M113 110 L113 200 L230 200 L230 130" />
+  <path class="wire" d="M230 200 L400 200 L575 200 L575 130" />
+  <path class="wire" d="M113 200 L113 420 L150 420" />
+  <path class="wire" d="M575 200 L575 420 L575 460" />
+  <path class="wire" d="M400 200 L400 260" />
+
+  <!-- Tomadas / luminárias -->
+  <circle cx="230" cy="130" r="6" class="point" />
+  <circle cx="575" cy="130" r="6" class="point" />
+  <circle cx="150" cy="420" r="6" class="point" />
+  <circle cx="575" cy="460" r="6" class="point" />
+  <circle cx="400" cy="260" r="6" class="point" />
+
+  <text x="130" y="88" class="tag">Quadro (QDC)</text>
+  <text x="200" y="120" class="tag">Luz Sala</text>
+  <text x="545" y="120" class="tag">Luz Cozinha</text>
+  <text x="120" y="440" class="tag">Suíte</text>
+  <text x="545" y="480" class="tag">Quarto</text>
+</svg>

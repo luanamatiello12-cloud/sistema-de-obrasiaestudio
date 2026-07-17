@@ -27,6 +27,16 @@ export default function Login({ onLogin, onNotify }: Props) {
     }
   };
 
+  const quickLogin = async (email: string) => {
+    setBusy(true);
+    try {
+      const { user, demo } = await login(email, 'demo123');
+      onLogin(user, demo);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleForgot = async (e: React.MouseEvent<HTMLButtonElement>) => {
     const form = e.currentTarget.closest('form');
     const email = (form?.elements.namedItem('email') as HTMLInputElement | null)?.value.trim();
@@ -83,6 +93,26 @@ export default function Login({ onLogin, onNotify }: Props) {
             Esqueci minha senha
           </button>
         </form>
+
+        <div className="mt-10 pt-6 border-t border-white/5">
+          <p className="text-[9px] text-gray-600 uppercase font-black tracking-widest mb-3">Acesso de demonstração</p>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => quickLogin('eng.ricardo@gpobra.com')}
+              className="flex-1 p-3 bg-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/10 transition-all"
+            >
+              Entrar como Engenheiro
+            </button>
+            <button
+              type="button"
+              onClick={() => quickLogin('cliente@gpobra.com')}
+              className="flex-1 p-3 bg-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/10 transition-all"
+            >
+              Entrar como Cliente
+            </button>
+          </div>
+        </div>
       </div>
     </motion.div>
   );

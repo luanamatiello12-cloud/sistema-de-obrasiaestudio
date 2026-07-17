@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" fill="none">
+  <defs>
+    <style>
+      .duct { stroke: #34d399; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.85; filter: drop-shadow(0 0 5px #34d399); }
+      .unit { fill: none; stroke: #6ee7b7; stroke-width: 3; filter: drop-shadow(0 0 5px #34d399); }
+      .flow { stroke: #a7f3d0; stroke-width: 2; stroke-dasharray: 4 6; fill: none; }
+      .tag { fill: #6ee7b7; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; }
+    </style>
+  </defs>
+
+  <!-- Condensadora (área de serviço) -->
+  <rect x="670" y="250" width="40" height="26" rx="4" class="unit" />
+  <text x="655" y="245" class="tag">Condensadora</text>
+
+  <!-- Tubulação frigorígena -->
+  <path class="duct" d="M690 250 L690 160 L230 160" />
+  <path class="duct" d="M690 250 L690 430 L575 430" />
+
+  <!-- Evaporadoras (splits) -->
+  <rect x="200" y="150" width="60" height="16" rx="8" class="unit" />
+  <rect x="545" y="422" width="60" height="16" rx="8" class="unit" />
+
+  <!-- Fluxo de ar -->
+  <path class="flow" d="M210 175 Q230 195 250 175" />
+  <path class="flow" d="M555 447 Q575 467 595 447" />
+
+  <text x="200" y="140" class="tag">Split Sala 12.000 BTU</text>
+  <text x="520" y="415" class="tag">Split Quarto 9.000 BTU</text>
+</svg>

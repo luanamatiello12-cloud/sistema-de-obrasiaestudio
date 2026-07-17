@@ -1,4 +1,5 @@
 import { sb } from './supabase';
+import { setMode } from './data';
 import type { UserState } from '../types';
 
 const SESSION_KEY = 'gp_obra_session';
@@ -47,11 +48,13 @@ export async function login(email: string, password: string): Promise<LoginResul
         `https://ui-avatars.com/api/?background=ffb7c5&color=000&name=${encodeURIComponent(email[0])}`,
       demo: false,
     };
+    setMode('supabase');
     storeSession(user);
     return { user, demo: false };
   }
 
   // Fallback: modo demo (mantém o sistema utilizável enquanto o Auth não é configurado)
+  setMode('local');
   const user = demoUser(email);
   storeSession(user);
   return { user, demo: true };

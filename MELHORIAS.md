@@ -2,6 +2,18 @@
 
 Versão de teste para aprovação. Nada foi enviado ao GitHub — tudo está local nesta branch.
 
+## ⭐ Refinamento profissional (2ª rodada)
+Como o backend Supabase original está morto, o sistema agora funciona **100% em modo demonstração**, sem depender de servidor nenhum — pronto para apresentar a clientes:
+
+- **Banco de dados local com dados realistas de uma obra**: cronograma (8 etapas com % real), financeiro (R$ 15 mil em compras), diário, materiais, chat com histórico e 4 pontos de raio-X. Tudo persiste no navegador e pode ser resetado.
+- **"Tempo real" funciona no modo demo**: publicar um relato, aprovar uma compra ou enviar mensagem atualiza a tela na hora (eventos locais simulando o realtime do Supabase).
+- **Planta baixa e raio-X profissionais em SVG próprio**: apartamento com cômodos cotados e 3 camadas técnicas (hidráulica, elétrica, climatização) que acendem sobre a planta com efeito de brilho. Substituem as imagens mortas do Supabase.
+- **Camada de dados única (`src/lib/data.ts`)**: todo o app fala com um único módulo que decide sozinho entre Supabase real e modo demo. Trocar para o backend real não exige mexer em componente nenhum.
+- **Compressão de imagens**: fotos são redimensionadas (máx. 1280px, JPEG) antes de salvar — nada de fotos de 5 MB travando o banco.
+- **Acessos de demonstração no login**: botões "Entrar como Engenheiro" (ADMIN) e "Entrar como Cliente" (visão restrita).
+- **Polimento visual**: tela de carregamento inicial com logo, favicon próprio, título e descrição da página, fonte Montserrat otimizada, barra de rolagem temática, esqueletos de carregamento, telas de "vazio" e tela amigável de erro (ErrorBoundary) no lugar de página em branco.
+- **Performance**: relatórios PDF (jsPDF) carregam sob demanda — o pacote inicial caiu de 986 kB para 560 kB.
+
 ## Segurança
 - **Login real via Supabase Auth**: o app agora tenta `signInWithPassword` primeiro. Se a conta existir, o papel (ADMIN/CLIENTE) vem da tabela `profiles` do banco — não mais do e-mail digitado.
 - **Modo Demo sinalizado**: enquanto o Auth não for configurado no Supabase, o app cai no comportamento antigo, mas mostra um selo "MODO DEMO" no cabeçalho e um aviso no login. Assim o sistema continua utilizável durante a transição.
