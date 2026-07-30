@@ -151,8 +151,19 @@ export function RaioXModal({ tit, url, onClose }: { tit: string; url: string; on
       </button>
       <h3 className="text-2xl font-black text-[#ffb7c5] mb-8 italic uppercase tracking-tighter">{tit}</h3>
       <div className="relative max-w-4xl w-full">
-        <img src={url} alt={`Foto interna de ${tit}`} className="w-full rounded-[2rem] shadow-2xl border-2 border-[#ffb7c5]/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-[2rem]"></div>
+        <img
+          src={url}
+          alt={`Foto interna de ${tit}`}
+          className="w-full max-h-[70vh] object-cover rounded-[2rem] shadow-2xl border-2 border-[#ffb7c5]/20"
+          onError={(e) => {
+            const img = e.currentTarget;
+            img.onerror = null;
+            img.src = `data:image/svg+xml;utf8,${encodeURIComponent(
+              `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500'><rect width='800' height='500' fill='#14161a'/><text x='400' y='250' fill='#ffb7c5' font-family='Montserrat,sans-serif' font-size='26' font-weight='800' text-anchor='middle'>${tit}</text><text x='400' y='285' fill='rgba(255,255,255,.4)' font-family='Montserrat,sans-serif' font-size='12' text-anchor='middle' letter-spacing='3'>FOTO INDISPONÍVEL OFFLINE</text></svg>`
+            )}`;
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-[2rem] pointer-events-none"></div>
       </div>
     </motion.div>
   );

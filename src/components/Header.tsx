@@ -18,7 +18,7 @@ interface Props {
 export default function Header({ user, activeTab, onTabChange, onOpenProfile }: Props) {
   return (
     <>
-      <header className="sticky top-0 bg-[#0a0b0d]/90 backdrop-blur-xl px-6 md:px-10 py-6 flex justify-between items-center border-b border-white/5 z-[100]">
+      <header className="sticky top-0 bg-[#0a0b0d] px-6 md:px-10 py-6 flex justify-between items-center border-b border-white/5 z-[100]">
         <div className="flex items-center gap-3">
           <h1 className="text-xl md:text-2xl font-black italic">
             GP<span className="text-[#ffb7c5]">:OBRA</span>

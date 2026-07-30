@@ -14,7 +14,7 @@ import type {
  * fique 100% navegável e apresentável sem depender de servidor.
  */
 
-const KEY = 'gp_obra_demo_db_v1';
+const KEY = 'gp_obra_demo_db_v2';
 
 export type TableName =
   | 'chat_mensagens'
@@ -46,6 +46,11 @@ function photo(label: string, from: string, to: string): string {
     <text x='200' y='185' fill='rgba(255,255,255,.6)' font-family='Montserrat,sans-serif' font-size='11' font-weight='700' text-anchor='middle' letter-spacing='3'>GP:OBRA · REGISTRO</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+/** Foto real de interior (Unsplash, uso livre), otimizada para a web. */
+function roomPhoto(id: string): string {
+  return `https://images.unsplash.com/photo-${id}?w=1000&q=80&auto=format&fit=crop`;
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86400000).toISOString();
@@ -83,10 +88,10 @@ function seed(): DB {
       { id: 4, material: 'Spots de LED embutir 7W', quantidade: '24 un', urgencia: 'critica', status: 'pendente', created_at: hoursAgo(6) },
     ],
     pontos_tecnicos: [
-      { id: 1, nome_comodo: 'Sala de Estar', url_foto_interna: photo('Sala de Estar', '#1e1b4b', '#4338ca'), pos_x: 29, pos_y: 30 },
-      { id: 2, nome_comodo: 'Cozinha', url_foto_interna: photo('Cozinha', '#134e4a', '#0d9488'), pos_x: 72, pos_y: 22 },
-      { id: 3, nome_comodo: 'Suíte', url_foto_interna: photo('Suíte Master', '#4c1d95', '#7c3aed'), pos_x: 19, pos_y: 70 },
-      { id: 4, nome_comodo: 'Quarto', url_foto_interna: photo('Quarto', '#831843', '#be185d'), pos_x: 72, pos_y: 72 },
+      { id: 1, nome_comodo: 'Sala de Estar', url_foto_interna: roomPhoto('1586023492125-27b2c045efd7'), pos_x: 29, pos_y: 30 },
+      { id: 2, nome_comodo: 'Cozinha', url_foto_interna: roomPhoto('1556911220-bff31c812dba'), pos_x: 72, pos_y: 22 },
+      { id: 3, nome_comodo: 'Suíte', url_foto_interna: roomPhoto('1616594039964-ae9021a400a0'), pos_x: 19, pos_y: 70 },
+      { id: 4, nome_comodo: 'Quarto', url_foto_interna: roomPhoto('1522771739844-6a9f6d5f14af'), pos_x: 72, pos_y: 72 },
     ],
     chat_mensagens: [
       { id: 1, autor: 'cliente@gpobra.com', mensagem: 'Bom dia! Como está o andamento do porcelanato?', created_at: hoursAgo(28) },

@@ -291,7 +291,7 @@ export default function App() {
 
           {/* Navegação mobile */}
           <nav
-            className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0b0d]/95 backdrop-blur-2xl border-t border-white/5 flex justify-around items-center p-4 z-[1000]"
+            className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0b0d] border-t border-white/5 flex justify-around items-center p-4 z-[1000]"
             aria-label="Navegação principal"
           >
             {TABS.map((item) => (
