@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
 import { Lightbulb, Layers, Paintbrush, Sofa } from 'lucide-react';
-import { APT, CENTER_OFFSET, FURNITURE, ROOMS, WALLS, type Piece, type Room } from '../lib/apartmentModel';
+import { APT, CENTER_OFFSET, FURNITURE, ROOMS, WALLS, WINDOWS, type Janela, type Piece, type Room } from '../lib/apartmentModel';
 import type { Hotspot } from '../types';
 
 interface Finishes {
@@ -64,6 +64,47 @@ function Furniture({ piece }: { piece: Piece }) {
       <boxGeometry args={[w, h, d]} />
       <meshStandardMaterial color={piece.cor} roughness={0.7} metalness={0.1} />
     </mesh>
+  );
+}
+
+function WindowPane({ j }: { j: Janela }) {
+  const [x, z] = j.pos;
+  const size: [number, number, number] = j.axis === 'x' ? [j.w, j.h, 0.06] : [0.06, j.h, j.w];
+  return (
+    <mesh position={[x, j.sill + j.h / 2, z]}>
+      <boxGeometry args={size} />
+      <meshStandardMaterial color="#a9c7e0" transparent opacity={0.35} roughness={0.05} metalness={0.2} depthWrite={false} />
+    </mesh>
+  );
+}
+
+function CeilingFixture({ room, on }: { room: Room; on: boolean }) {
+  const [x1, z1, x2, z2] = room.rect;
+  return (
+    <mesh position={[(x1 + x2) / 2, APT.wallHeight - 0.06, (z1 + z2) / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+      <circleGeometry args={[0.18, 20]} />
+      <meshStandardMaterial
+        color={on ? '#fff3d6' : '#c7ccd1'}
+        emissive={on ? '#ffcf87' : '#000000'}
+        emissiveIntensity={on ? 1.4 : 0}
+      />
+    </mesh>
+  );
+}
+
+function Plant({ pos }: { pos: [number, number] }) {
+  const [x, z] = pos;
+  return (
+    <group position={[x, 0, z]}>
+      <mesh position={[0, 0.22, 0]} castShadow>
+        <cylinderGeometry args={[0.16, 0.12, 0.44, 14]} />
+        <meshStandardMaterial color="#8a6d4f" roughness={0.8} />
+      </mesh>
+      <mesh position={[0, 0.7, 0]} castShadow>
+        <sphereGeometry args={[0.36, 14, 14]} />
+        <meshStandardMaterial color="#3f6f4a" roughness={0.9} />
+      </mesh>
+    </group>
   );
 }
 
@@ -142,7 +183,33 @@ export default function Planta3D({ hotspots, onOpenRaioX }: Props) {
             <Wall key={i} seg={seg} painted={fin.pintura} />
           ))}
 
-          {fin.mobilia && FURNITURE.map((p, i) => <Furniture key={i} piece={p} />)}
+          {WINDOWS.map((j, i) => (
+            <WindowPane key={i} j={j} />
+          ))}
+
+          {/* Teto / forro (aparece com a pintura pronta) */}
+          {fin.pintura && (
+            <>
+              <mesh position={[APT.width / 2, APT.wallHeight, APT.depth / 2]} rotation={[Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[APT.width, APT.depth]} />
+                <meshStandardMaterial color="#efece6" transparent opacity={0.16} depthWrite={false} side={2} />
+              </mesh>
+              {ROOMS.map((r) => (
+                <CeilingFixture key={r.nome} room={r} on={fin.iluminacao} />
+              ))}
+            </>
+          )}
+
+          {fin.mobilia && (
+            <>
+              {FURNITURE.map((p, i) => (
+                <Furniture key={i} piece={p} />
+              ))}
+              <Plant pos={[0.5, 0.5]} />
+              <Plant pos={[7.4, 3.6]} />
+              <Plant pos={[11.4, 0.5]} />
+            </>
+          )}
 
           {fin.iluminacao && ROOMS.map((r) => <RoomLight key={r.nome} room={r} />)}
 

@@ -89,6 +89,31 @@ export const FURNITURE: Piece[] = [
   { pos: [8, 7.75], size: [2.1, 0.95, 0.15], cor: '#5b4636' }, // cabeceira
   { pos: [11.4, 6], size: [0.55, 2.2, 2.2], cor: '#6b5844' }, // guarda-roupa
   { pos: [7, 4.5], size: [1.3, 0.75, 0.55], cor: '#4b5563' }, // escrivaninha
+  { pos: [6.7, 7.5], size: [0.5, 0.5, 0.5], cor: '#6b5844' }, // criado-mudo quarto
+  // Sala — jantar
+  { pos: [6.6, 1.5], size: [1.3, 0.74, 0.85], cor: '#5b4636' }, // mesa de jantar
+  { pos: [6.6, 0.85], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' }, // cadeira
+  { pos: [6.6, 2.15], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' }, // cadeira
+  { pos: [5.9, 1.5], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' }, // cadeira
+  { pos: [7.3, 1.5], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' }, // cadeira
+  // Suíte — criado-mudo
+  { pos: [0.5, 7.4], size: [0.5, 0.5, 0.5], cor: '#6b5844' },
+];
+
+/** Janela de vidro em parede externa. axis 'x' = parede corre em X (frente/fundo); 'z' = laterais. */
+export interface Janela {
+  pos: [number, number];
+  w: number;
+  h: number;
+  sill: number;
+  axis: 'x' | 'z';
+}
+
+export const WINDOWS: Janela[] = [
+  { pos: [3.5, 0], w: 2.2, h: 1.15, sill: 1.0, axis: 'x' }, // sala (frente)
+  { pos: [10.2, 0], w: 1.6, h: 1.15, sill: 1.0, axis: 'x' }, // cozinha (frente)
+  { pos: [0, 6], w: 2.2, h: 1.15, sill: 1.0, axis: 'z' }, // suíte (lateral esquerda)
+  { pos: [12, 6.2], w: 1.8, h: 1.15, sill: 1.0, axis: 'z' }, // quarto (lateral direita)
 ];
 
 /** Deslocamento para centralizar o apartamento na origem. */
