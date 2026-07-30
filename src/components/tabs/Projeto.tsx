@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { motion } from 'motion/react';
-import { Calendar, Plus, X } from 'lucide-react';
+import { Box, Calendar, Map, Plus, X } from 'lucide-react';
 import { plantaAssets } from '../../lib/assets';
 import { can } from '../../lib/permissions';
 import type { CronogramaItem, Hotspot, UserState } from '../../types';
+
+// Vista 3D (Three.js) carregada sob demanda — só baixa quando o usuário abre o 3D.
+const Planta3D = lazy(() => import('../Planta3D'));
 
 const LAYERS = [
   { key: 'hidraulica', label: 'Hidráulica' },
@@ -38,6 +41,7 @@ export default function Projeto({
     clima: false,
   });
   const [placing, setPlacing] = useState(false);
+  const [view, setView] = useState<'2d' | '3d'>('2d');
   const planta = plantaAssets();
 
   const isAnyLayerActive = layers.hidraulica || layers.eletrica || layers.clima;
@@ -83,7 +87,36 @@ export default function Projeto({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className="lg:col-span-2 bg-[#14161a] rounded-[2rem] relative p-4 min-h-[400px] md:min-h-[600px] overflow-hidden border border-white/5">
+        <div className="lg:col-span-2 space-y-4">
+          {/* Seletor Planta 2D / Vista 3D */}
+          <div className="flex gap-1 bg-[#14161a] p-1.5 rounded-2xl border border-white/5 w-fit">
+            {(['2d', '3d'] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  view === v ? 'bg-[#ffb7c5] text-black' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                {v === '2d' ? <Map size={13} /> : <Box size={13} />}
+                {v === '2d' ? 'Planta 2D' : 'Vista 3D'}
+              </button>
+            ))}
+          </div>
+
+          {view === '3d' ? (
+            <Suspense
+              fallback={
+                <div className="w-full h-[400px] md:h-[600px] rounded-[2rem] bg-[#14161a] border border-white/5 flex flex-col items-center justify-center gap-4">
+                  <Box size={40} className="text-[#ffb7c5] animate-pulse" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Carregando modelo 3D...</p>
+                </div>
+              }
+            >
+              <Planta3D />
+            </Suspense>
+          ) : (
+          <div className="bg-[#14161a] rounded-[2rem] relative p-4 min-h-[400px] md:min-h-[600px] overflow-hidden border border-white/5">
           <div
             className={`relative w-full h-full flex items-center justify-center ${placing ? 'cursor-crosshair ring-2 ring-amber-500/50 rounded-2xl' : ''}`}
             onClick={handlePlantClick}
@@ -160,6 +193,8 @@ export default function Projeto({
               ))}
             </div>
           </div>
+          </div>
+          )}
         </div>
 
         <div className="bg-[#14161a] p-8 rounded-[2rem] border border-white/5 border-r-8 border-[#ffb7c5]/20">
