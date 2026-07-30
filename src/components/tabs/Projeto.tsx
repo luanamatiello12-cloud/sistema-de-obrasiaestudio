@@ -113,7 +113,7 @@ export default function Projeto({
                 </div>
               }
             >
-              <Planta3D />
+              <Planta3D hotspots={hotspots} onOpenRaioX={onOpenRaioX} />
             </Suspense>
           ) : (
           <div className="bg-[#14161a] rounded-[2rem] relative p-4 min-h-[400px] md:min-h-[600px] overflow-hidden border border-white/5">
