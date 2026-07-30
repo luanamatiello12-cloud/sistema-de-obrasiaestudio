@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { FileText } from 'lucide-react';
 import { EmptyState } from '../Skeleton';
+import { can } from '../../lib/permissions';
 import type { DiarioItem, UserState } from '../../types';
 
 interface Props {
@@ -20,7 +21,7 @@ export default function Diario({ user, diario, onNewRelato }: Props) {
     >
       <div className="flex justify-between items-center">
         <h2 className="text-4xl md:text-5xl font-black uppercase italic">Diário</h2>
-        {user.role === 'ADMIN' && (
+        {can(user, 'new_relato') && (
           <button
             onClick={onNewRelato}
             className="bg-[#ffb7c5] text-black px-8 py-4 rounded-2xl font-black uppercase text-xs shadow-lg hover:scale-105 transition-all"

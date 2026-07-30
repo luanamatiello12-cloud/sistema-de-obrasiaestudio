@@ -14,7 +14,7 @@ import type {
  * fique 100% navegável e apresentável sem depender de servidor.
  */
 
-const KEY = 'gp_obra_demo_db_v2';
+const KEY = 'gp_obra_demo_db_v3';
 
 export type TableName =
   | 'chat_mensagens'
@@ -94,10 +94,17 @@ function seed(): DB {
       { id: 4, nome_comodo: 'Quarto', url_foto_interna: roomPhoto('1522771739844-6a9f6d5f14af'), pos_x: 72, pos_y: 72 },
     ],
     chat_mensagens: [
+      // Canal geral (todos veem)
       { id: 1, autor: 'cliente@gpobra.com', mensagem: 'Bom dia! Como está o andamento do porcelanato?', created_at: hoursAgo(28) },
       { id: 2, autor: 'eng.ricardo@gpobra.com', mensagem: 'Bom dia! Material entregue ontem, assentamento começa amanhã cedo.', created_at: hoursAgo(27) },
       { id: 3, autor: 'cliente@gpobra.com', mensagem: 'Perfeito. E os spots de LED, já foram pedidos?', created_at: hoursAgo(5) },
       { id: 4, autor: 'eng.ricardo@gpobra.com', mensagem: 'Acabei de lançar o pedido como crítico, aguardando sua aprovação no painel de materiais.', created_at: hoursAgo(4) },
+      // Privado: Engenheiro ⇄ Mestre de obras
+      { id: 5, autor: 'eng.ricardo@gpobra.com', para: 'mestre.jose@gpobra.com', mensagem: 'José, confirma se a prumada da suíte passou no teste de pressão antes de fechar a parede.', created_at: hoursAgo(26) },
+      { id: 6, autor: 'mestre.jose@gpobra.com', para: 'eng.ricardo@gpobra.com', mensagem: 'Confirmado, engenheiro. Segurou 40 min sem queda. Pode liberar o gesso.', created_at: hoursAgo(25) },
+      // Privado: Engenheiro ⇄ Cliente
+      { id: 7, autor: 'cliente@gpobra.com', para: 'eng.ricardo@gpobra.com', mensagem: 'Consigo passar na obra sexta à tarde para ver os acabamentos?', created_at: hoursAgo(3) },
+      { id: 8, autor: 'eng.ricardo@gpobra.com', para: 'cliente@gpobra.com', mensagem: 'Claro! Pode vir às 15h que eu te acompanho pessoalmente.', created_at: hoursAgo(2) },
     ],
   };
 }

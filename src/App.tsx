@@ -91,10 +91,13 @@ export default function App() {
     user,
     onError: (msg) => addNotification(msg, 'warning'),
     onNewChatMessage: (msg) => {
-      if (msg.autor !== user?.email) {
-        addNotification(`Nova mensagem de ${msg.autor.split('@')[0]}`, 'info');
-        if (!chatOpenRef.current) setUnread((u) => u + 1);
-      }
+      if (msg.autor === user?.email) return;
+      // Só notifica sobre o canal geral ou mensagens privadas destinadas a mim.
+      const paraMim = !msg.para || msg.para === user?.email;
+      if (!paraMim) return;
+      const privada = !!msg.para;
+      addNotification(`${privada ? '🔒 ' : ''}Nova mensagem de ${msg.autor.split('@')[0]}`, 'info');
+      if (!chatOpenRef.current) setUnread((u) => u + 1);
     },
   });
 

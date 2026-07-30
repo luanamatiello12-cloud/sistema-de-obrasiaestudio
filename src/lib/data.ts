@@ -63,7 +63,7 @@ export async function listHotspots(): Promise<Hotspot[]> {
 }
 
 /* ---------------- Escritas ---------------- */
-export async function sendChatMessage(payload: { autor: string; mensagem?: string; midia_url?: string }): Promise<Result> {
+export async function sendChatMessage(payload: { autor: string; para?: string | null; mensagem?: string; midia_url?: string }): Promise<Result> {
   if (isDemo()) {
     local.insert('chat_mensagens', payload);
     return { error: null };

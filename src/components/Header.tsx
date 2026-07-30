@@ -1,4 +1,5 @@
 import { Camera, DollarSign, FileText, Package } from 'lucide-react';
+import { roleLabel } from '../lib/permissions';
 import type { UserState } from '../types';
 
 export const TABS = [
@@ -32,7 +33,7 @@ export default function Header({ user, activeTab, onTabChange, onOpenProfile }: 
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
             <p className="text-[12px] font-bold uppercase">{user.email.split('@')[0]}</p>
-            <p className="text-[9px] text-[#ffb7c5] font-black uppercase tracking-widest">{user.role} ACCESS</p>
+            <p className="text-[9px] text-[#ffb7c5] font-black uppercase tracking-widest">{roleLabel(user.role)}</p>
           </div>
           <button onClick={onOpenProfile} className="relative" aria-label="Abrir perfil">
             <img

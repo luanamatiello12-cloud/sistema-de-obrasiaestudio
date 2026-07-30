@@ -8,6 +8,7 @@
 create table if not exists public.chat_mensagens (
   id bigint generated always as identity primary key,
   autor text not null,
+  para text,               -- destinatário de mensagem privada; null = canal geral
   mensagem text,
   midia_url text,
   created_at timestamptz not null default now()

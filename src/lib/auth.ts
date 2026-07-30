@@ -9,10 +9,16 @@ export interface LoginResult {
   demo: boolean; // true = caiu no modo demo (Supabase Auth não configurado / credenciais não existem)
 }
 
+function roleFromEmail(email: string): UserState['role'] {
+  if (email.includes('mestre')) return 'MESTRE';
+  if (email.includes('eng')) return 'ADMIN';
+  return 'CLIENTE';
+}
+
 function demoUser(email: string): UserState {
   return {
     email,
-    role: email.includes('eng') || email.includes('mestre') ? 'ADMIN' : 'CLIENTE',
+    role: roleFromEmail(email),
     avatar: `https://ui-avatars.com/api/?background=ffb7c5&color=000&name=${encodeURIComponent(email[0])}`,
     demo: true,
   };
@@ -50,7 +56,7 @@ export async function login(email: string, password: string): Promise<LoginResul
       .eq('id', data.user.id)
       .maybeSingle();
 
-    if (profile?.role === 'ADMIN') role = 'ADMIN';
+    if (profile?.role === 'ADMIN' || profile?.role === 'MESTRE') role = profile.role;
     if (profile?.avatar_url) avatar = profile.avatar_url;
 
     const user: UserState = {

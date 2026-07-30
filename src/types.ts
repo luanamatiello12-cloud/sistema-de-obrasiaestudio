@@ -1,6 +1,6 @@
 export interface UserState {
   email: string;
-  role: 'ADMIN' | 'CLIENTE';
+  role: 'ADMIN' | 'MESTRE' | 'CLIENTE';
   avatar: string | null;
   /** true quando o login caiu no modo demonstração (Supabase Auth não configurado) */
   demo?: boolean;
@@ -9,6 +9,8 @@ export interface UserState {
 export interface ChatMessage {
   id?: number | string;
   autor: string;
+  /** Destinatário de uma mensagem privada. Vazio/ausente = canal geral (todos veem). */
+  para?: string | null;
   mensagem?: string;
   midia_url?: string;
   created_at?: string;

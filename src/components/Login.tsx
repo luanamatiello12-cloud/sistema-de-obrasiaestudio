@@ -96,20 +96,27 @@ export default function Login({ onLogin, onNotify }: Props) {
 
         <div className="mt-10 pt-6 border-t border-white/5">
           <p className="text-[9px] text-gray-600 uppercase font-black tracking-widest mb-3">Acesso de demonstração</p>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => quickLogin('eng.ricardo@gpobra.com')}
-              className="flex-1 p-3 bg-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/10 transition-all"
+              className="p-3 bg-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/10 transition-all leading-tight"
             >
-              Entrar como Engenheiro
+              Engenheiro
+            </button>
+            <button
+              type="button"
+              onClick={() => quickLogin('mestre.jose@gpobra.com')}
+              className="p-3 bg-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/10 transition-all leading-tight"
+            >
+              Mestre
             </button>
             <button
               type="button"
               onClick={() => quickLogin('cliente@gpobra.com')}
-              className="flex-1 p-3 bg-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/10 transition-all"
+              className="p-3 bg-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-300 hover:bg-white/10 transition-all leading-tight"
             >
-              Entrar como Cliente
+              Cliente
             </button>
           </div>
         </div>

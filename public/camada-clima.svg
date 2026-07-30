@@ -13,17 +13,27 @@
   <text x="655" y="245" class="tag">Condensadora</text>
 
   <!-- Tubulação frigorígena -->
-  <path class="duct" d="M690 250 L690 160 L230 160" />
-  <path class="duct" d="M690 250 L690 430 L575 430" />
+  <path class="duct" d="M690 250 L690 160 L230 160" />          <!-- ramo Sala -->
+  <path class="duct" d="M690 276 L690 430 L575 430" />          <!-- ramo Quarto -->
+  <path class="duct" d="M690 430 L150 430" />                    <!-- ramo Suíte -->
 
   <!-- Evaporadoras (splits) -->
   <rect x="200" y="150" width="60" height="16" rx="8" class="unit" />
   <rect x="545" y="422" width="60" height="16" rx="8" class="unit" />
+  <rect x="120" y="410" width="60" height="16" rx="8" class="unit" />
+
+  <!-- Exaustor do banheiro (ventilação, não é ar-condicionado) -->
+  <circle cx="320" cy="410" r="13" class="unit" />
+  <path class="unit" d="M320 400 L320 420 M310 410 L330 410 M313 403 L327 417 M327 403 L313 417" stroke-width="2" />
 
   <!-- Fluxo de ar -->
   <path class="flow" d="M210 175 Q230 195 250 175" />
   <path class="flow" d="M555 447 Q575 467 595 447" />
+  <path class="flow" d="M130 435 Q150 455 170 435" />
+  <path class="flow" d="M320 393 L320 378" />
 
   <text x="200" y="140" class="tag">Split Sala 12.000 BTU</text>
   <text x="520" y="415" class="tag">Split Quarto 9.000 BTU</text>
+  <text x="112" y="403" class="tag">Split Suíte 9.000 BTU</text>
+  <text x="288" y="445" class="tag">Exaustor Banho</text>
 </svg>

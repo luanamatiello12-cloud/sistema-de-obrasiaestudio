@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { CheckCircle, Download, Package, Trash2 } from 'lucide-react';
 import { EmptyState } from '../Skeleton';
+import { can } from '../../lib/permissions';
 import type { PedidoMaterial, UserState } from '../../types';
 
 interface Props {
@@ -34,7 +35,7 @@ export default function Pedidos({ user, pedidos, onNewPedido, onApprove, onDelet
           >
             <Download size={14} aria-hidden="true" /> Relatório
           </button>
-          {user.role === 'ADMIN' && (
+          {can(user, 'request_material') && (
             <button
               onClick={onNewPedido}
               className="bg-[#ffb7c5] text-black px-8 py-4 rounded-2xl font-black uppercase text-xs shadow-lg hover:scale-105 transition-all"
@@ -76,7 +77,7 @@ export default function Pedidos({ user, pedidos, onNewPedido, onApprove, onDelet
               <span className="text-[8px] text-gray-600 font-bold">{new Date(p.created_at).toLocaleDateString('pt-br')}</span>
             </div>
 
-            {user.role === 'ADMIN' && p.status === 'pendente' && (
+            {can(user, 'approve_purchase') && p.status === 'pendente' && (
               <div className="flex gap-2 pt-4 border-t border-white/5">
                 <button
                   onClick={() => onApprove(p)}

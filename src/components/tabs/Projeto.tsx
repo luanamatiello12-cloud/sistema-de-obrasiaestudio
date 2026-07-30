@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Calendar, Plus, X } from 'lucide-react';
 import { plantaAssets } from '../../lib/assets';
+import { can } from '../../lib/permissions';
 import type { CronogramaItem, Hotspot, UserState } from '../../types';
 
 const LAYERS = [
@@ -61,7 +62,7 @@ export default function Projeto({
     >
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter">Visão Geral</h2>
-        {user.role === 'ADMIN' && (
+        {can(user, 'manage_hotspots') && (
           <button
             onClick={() => setPlacing((p) => !p)}
             className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 transition-all ${
@@ -120,7 +121,7 @@ export default function Projeto({
                   aria-label={`Ver foto de ${h.nome_comodo}`}
                   className="w-6 h-6 bg-[#ffb7c5] rounded-full border-2 border-white shadow-[0_0_15px_rgba(255,183,197,0.5)] animate-pulse"
                 />
-                {user.role === 'ADMIN' && (
+                {can(user, 'manage_hotspots') && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -170,9 +171,9 @@ export default function Projeto({
               <div
                 key={item.id}
                 className={`group p-2 rounded-xl transition-all ${
-                  user.role === 'ADMIN' ? 'cursor-pointer hover:bg-white/5' : ''
+                  can(user, 'edit_cronograma') ? 'cursor-pointer hover:bg-white/5' : ''
                 }`}
-                onClick={() => user.role === 'ADMIN' && onEditCrono(item)}
+                onClick={() => can(user, 'edit_cronograma') && onEditCrono(item)}
               >
                 <div className="flex justify-between mb-2">
                   <span className="text-[10px] uppercase text-gray-400 font-bold">{item.etapa}</span>
