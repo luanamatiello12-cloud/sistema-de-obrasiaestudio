@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { useRef, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, OrbitControls } from '@react-three/drei';
+import type { Mesh } from 'three';
 import { Lightbulb, Layers, Paintbrush, Sofa } from 'lucide-react';
 import { APT, CENTER_OFFSET, FURNITURE, ROOMS, WALLS, WINDOWS, type Janela, type Piece, type Room } from '../lib/apartmentModel';
 import type { Hotspot } from '../types';
@@ -28,7 +29,7 @@ function Wall({ seg, painted }: { seg: [number, number, number, number]; painted
       <meshStandardMaterial
         color={painted ? '#efece6' : '#8a8f98'}
         transparent
-        opacity={painted ? 0.6 : 0.32}
+        opacity={painted ? 0.78 : 0.32}
         roughness={0.7}
         metalness={0.05}
       />
@@ -63,6 +64,23 @@ function Furniture({ piece }: { piece: Piece }) {
     <mesh position={[x, y, z]} castShadow receiveShadow>
       <boxGeometry args={[w, h, d]} />
       <meshStandardMaterial color={piece.cor} roughness={0.7} metalness={0.1} />
+    </mesh>
+  );
+}
+
+/** Teto sólido que some quando a câmera olha de cima (para inspecionar por dentro). */
+function SmartCeiling() {
+  const ref = useRef<Mesh>(null);
+  useFrame(({ camera }) => {
+    if (!ref.current) return;
+    const d = camera.position.length() || 1;
+    const topness = camera.position.y / d; // 0 = de lado, 1 = de cima
+    ref.current.visible = topness < 0.52;
+  });
+  return (
+    <mesh ref={ref} position={[APT.width / 2, APT.wallHeight + 0.02, APT.depth / 2]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
+      <planeGeometry args={[APT.width, APT.depth]} />
+      <meshStandardMaterial color="#e7e4de" roughness={0.92} side={2} />
     </mesh>
   );
 }
@@ -162,7 +180,7 @@ export default function Planta3D({ hotspots, onOpenRaioX }: Props) {
 
   return (
     <div className="relative w-full h-[400px] md:h-[600px] rounded-[2rem] overflow-hidden bg-gradient-to-b from-[#0d0e12] to-[#14161a] border border-white/5">
-      <Canvas shadows camera={{ position: [0, 10, 12], fov: 38 }} dpr={[1, 2]}>
+      <Canvas shadows camera={{ position: [1, 7, 14], fov: 38 }} dpr={[1, 2]}>
         <color attach="background" args={['#0a0b0d']} />
         <ambientLight intensity={fin.iluminacao ? 0.5 : 0.65} />
         <directionalLight position={[8, 14, 6]} intensity={fin.iluminacao ? 0.8 : 1.1} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
@@ -187,13 +205,10 @@ export default function Planta3D({ hotspots, onOpenRaioX }: Props) {
             <WindowPane key={i} j={j} />
           ))}
 
-          {/* Teto / forro (aparece com a pintura pronta) */}
+          {/* Teto / forro sólido (some ao olhar de cima) — surge com a pintura pronta */}
           {fin.pintura && (
             <>
-              <mesh position={[APT.width / 2, APT.wallHeight, APT.depth / 2]} rotation={[Math.PI / 2, 0, 0]}>
-                <planeGeometry args={[APT.width, APT.depth]} />
-                <meshStandardMaterial color="#efece6" transparent opacity={0.16} depthWrite={false} side={2} />
-              </mesh>
+              <SmartCeiling />
               {ROOMS.map((r) => (
                 <CeilingFixture key={r.nome} room={r} on={fin.iluminacao} />
               ))}
