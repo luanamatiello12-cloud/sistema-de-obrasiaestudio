@@ -84,7 +84,7 @@ function HotspotPin({ h, onOpen }: { h: Hotspot; onOpen: (tit: string, url: stri
   const x = (Number(h.pos_x) / 100) * APT.width;
   const z = (Number(h.pos_y) / 100) * APT.depth;
   return (
-    <Html position={[x, 1.7, z]} center distanceFactor={12}>
+    <Html position={[x, 1.7, z]} center distanceFactor={12} zIndexRange={[500, 0]}>
       <button
         onClick={() => onOpen(h.nome_comodo, h.url_foto_interna)}
         title={`Ver foto de ${h.nome_comodo}`}
