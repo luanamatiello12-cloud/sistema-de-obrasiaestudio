@@ -67,11 +67,16 @@ insert into storage.buckets (id, name, public)
 values ('projeto-arquivos', 'projeto-arquivos', true)
 on conflict (id) do nothing;
 
--- Dados iniciais do cronograma (exemplo — ajuste às etapas reais)
+-- Dados iniciais do cronograma. Os nomes destas etapas alimentam o modo
+-- automático da Vista 3D (Contrapiso→piso, Elétrica→iluminação,
+-- Marcenaria→mobília, Pintura→pintura/teto). Ajuste os %, mantenha os nomes.
 insert into public.obra_cronograma (etapa, progresso, ordem) values
-  ('Fundação', 0, 1),
-  ('Alvenaria', 0, 2),
-  ('Cobertura', 0, 3),
-  ('Instalações', 0, 4),
-  ('Acabamento', 0, 5)
+  ('Demolição', 0, 1),
+  ('Contrapiso', 0, 2),
+  ('Hidráulica', 0, 3),
+  ('Elétrica', 0, 4),
+  ('Alvenaria / Gesso', 0, 5),
+  ('Marcenaria', 0, 6),
+  ('Pintura', 0, 7),
+  ('Acabamento Final', 0, 8)
 on conflict do nothing;

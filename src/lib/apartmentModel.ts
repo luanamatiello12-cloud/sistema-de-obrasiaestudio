@@ -116,5 +116,21 @@ export const WINDOWS: Janela[] = [
   { pos: [12, 6.2], w: 1.8, h: 1.15, sill: 1.0, axis: 'z' }, // quarto (lateral direita)
 ];
 
+/** Porta com dobradiça no ponto `hinge`, entreaberta em `swing` radianos. */
+export interface Porta {
+  hinge: [number, number];
+  w: number;
+  axis: 'x' | 'z';
+  swing: number;
+}
+
+export const DOORS: Porta[] = [
+  { hinge: [1.4, 4], w: 0.8, axis: 'x', swing: -0.6 }, // suíte
+  { hinge: [4.4, 4], w: 0.8, axis: 'x', swing: -0.6 }, // banho
+  { hinge: [8.4, 4], w: 0.8, axis: 'x', swing: -0.6 }, // quarto
+  { hinge: [8, 1.6], w: 0.8, axis: 'z', swing: 0.6 }, // cozinha
+  { hinge: [6, 6], w: 0.8, axis: 'z', swing: -0.6 }, // banho ↔ quarto
+];
+
 /** Deslocamento para centralizar o apartamento na origem. */
 export const CENTER_OFFSET: [number, number, number] = [-APT.width / 2, 0, -APT.depth / 2];

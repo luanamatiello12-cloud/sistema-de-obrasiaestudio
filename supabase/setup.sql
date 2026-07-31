@@ -12,7 +12,7 @@
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null,
-  role text not null default 'CLIENTE' check (role in ('ADMIN', 'CLIENTE')),
+  role text not null default 'CLIENTE' check (role in ('ADMIN', 'MESTRE', 'CLIENTE')),
   avatar_url text,
   created_at timestamptz not null default now()
 );
@@ -49,6 +49,30 @@ as $$
   );
 $$;
 
+-- Helper: equipe de campo (ADMIN ou MESTRE) — registra e executa, mas o
+-- financeiro continua restrito ao ADMIN.
+create or replace function public.is_staff()
+returns boolean
+language sql
+security definer set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role in ('ADMIN', 'MESTRE')
+  );
+$$;
+
+-- Helper: e-mail do usuário logado (para as regras do chat privado)
+create or replace function public.my_email()
+returns text
+language sql
+security definer set search_path = public
+stable
+as $$
+  select email from public.profiles where id = auth.uid();
+$$;
+
 -- 2) Ativar RLS em todas as tabelas
 alter table public.chat_mensagens    enable row level security;
 alter table public.obra_cronograma   enable row level security;
@@ -64,9 +88,14 @@ drop policy if exists "profiles_select" on public.profiles;
 create policy "profiles_select" on public.profiles
   for select using (auth.uid() = id or public.is_admin());
 
--- Leitura: qualquer usuário AUTENTICADO pode ler os dados da obra
+-- Chat: canal geral é visível a todos; mensagens privadas só ao remetente
+-- e ao destinatário (privacidade imposta pelo banco, não só pela tela).
 drop policy if exists "chat_select" on public.chat_mensagens;
-create policy "chat_select" on public.chat_mensagens for select to authenticated using (true);
+create policy "chat_select" on public.chat_mensagens
+  for select to authenticated
+  using (para is null or autor = public.my_email() or para = public.my_email());
+
+-- Demais leituras: qualquer usuário AUTENTICADO pode ler os dados da obra
 
 drop policy if exists "crono_select" on public.obra_cronograma;
 create policy "crono_select" on public.obra_cronograma for select to authenticated using (true);
@@ -89,26 +118,37 @@ create policy "chat_insert" on public.chat_mensagens
   for insert to authenticated
   with check (autor = (select email from public.profiles where id = auth.uid()));
 
--- Escritas administrativas: apenas ADMIN
+-- Cronograma: equipe de campo (admin ou mestre) atualiza o progresso
 drop policy if exists "crono_write" on public.obra_cronograma;
 create policy "crono_write" on public.obra_cronograma
-  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+  for all to authenticated using (public.is_staff()) with check (public.is_staff());
 
+-- Financeiro: somente ADMIN lança
 drop policy if exists "fin_write" on public.obra_financeiro;
 create policy "fin_write" on public.obra_financeiro
   for insert to authenticated with check (public.is_admin());
 
+-- Diário: equipe de campo publica relatos
 drop policy if exists "diario_write" on public.diario_obra;
 create policy "diario_write" on public.diario_obra
-  for insert to authenticated with check (public.is_admin());
+  for insert to authenticated with check (public.is_staff());
 
+-- Pedidos: equipe SOLICITA; aprovar/excluir é só do ADMIN
 drop policy if exists "ped_write" on public.pedidos_materiais;
-create policy "ped_write" on public.pedidos_materiais
-  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "ped_insert" on public.pedidos_materiais;
+create policy "ped_insert" on public.pedidos_materiais
+  for insert to authenticated with check (public.is_staff());
+drop policy if exists "ped_update" on public.pedidos_materiais;
+create policy "ped_update" on public.pedidos_materiais
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
+drop policy if exists "ped_delete" on public.pedidos_materiais;
+create policy "ped_delete" on public.pedidos_materiais
+  for delete to authenticated using (public.is_admin());
 
+-- Pontos de raio-X: equipe de campo cria/remove
 drop policy if exists "pontos_write" on public.pontos_tecnicos;
 create policy "pontos_write" on public.pontos_tecnicos
-  for all to authenticated using (public.is_admin()) with check (public.is_admin());
+  for all to authenticated using (public.is_staff()) with check (public.is_staff());
 
 -- 4) Finalizar compra de forma atômica (aprovar pedido + lançar no financeiro)
 create or replace function public.finalizar_compra(
@@ -148,7 +188,9 @@ create policy "storage_upload_authenticated" on storage.objects
 -- ============================================================
 -- Depois de rodar:
 -- 1. Crie os usuários em Authentication > Users (e-mail + senha)
--- 2. Promova os administradores:
---    update public.profiles set role = 'ADMIN' where email = 'engenheiro@exemplo.com';
--- 3. O app detecta automaticamente e sai do "Modo Demo"
+-- 2. Defina o papel de cada um (o padrão é CLIENTE):
+--    update public.profiles set role = 'ADMIN'  where email = 'engenheiro@exemplo.com';
+--    update public.profiles set role = 'MESTRE' where email = 'mestre@exemplo.com';
+-- 3. Preencha o .env (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) e o app
+--    detecta automaticamente e sai do "Modo Demo".
 -- ============================================================
