@@ -1,8 +1,7 @@
-import { useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useState } from 'react';
+import { Canvas } from '@react-three/fiber';
 import { ContactShadows, Html, OrbitControls } from '@react-three/drei';
-import type { Mesh } from 'three';
-import { CalendarClock, Lightbulb, Layers, Paintbrush, Sofa } from 'lucide-react';
+import { CalendarClock, Home, Lightbulb, Layers, Paintbrush, Sofa } from 'lucide-react';
 import { APT, CENTER_OFFSET, DOORS, FURNITURE, ROOMS, WALLS, WINDOWS, type Janela, type Piece, type Porta, type Room } from '../lib/apartmentModel';
 import type { CronogramaItem, Hotspot } from '../types';
 
@@ -80,20 +79,39 @@ function Furniture({ piece }: { piece: Piece }) {
   );
 }
 
-/** Teto sólido que some quando a câmera olha de cima (para inspecionar por dentro). */
-function SmartCeiling() {
-  const ref = useRef<Mesh>(null);
-  useFrame(({ camera }) => {
-    if (!ref.current) return;
-    const d = camera.position.length() || 1;
-    const topness = camera.position.y / d; // 0 = de lado, 1 = de cima
-    ref.current.visible = topness < 0.52;
-  });
+/** Telhado: laje de cobertura + platibanda (mureta na borda), como um prédio real. */
+function Roof() {
+  const W = APT.width + 0.3;
+  const D = APT.depth + 0.3;
+  const slabY = APT.wallHeight + 0.08;
+  const parapetY = APT.wallHeight + 0.16 + 0.2;
+  const cx = APT.width / 2;
+  const cz = APT.depth / 2;
   return (
-    <mesh ref={ref} position={[APT.width / 2, APT.wallHeight + 0.02, APT.depth / 2]} rotation={[Math.PI / 2, 0, 0]} receiveShadow>
-      <planeGeometry args={[APT.width, APT.depth]} />
-      <meshStandardMaterial color="#e7e4de" roughness={0.92} side={2} />
-    </mesh>
+    <group>
+      {/* Laje de cobertura */}
+      <mesh position={[cx, slabY, cz]} castShadow receiveShadow>
+        <boxGeometry args={[W, 0.16, D]} />
+        <meshStandardMaterial color="#d9d5cd" roughness={0.9} />
+      </mesh>
+      {/* Platibanda */}
+      <mesh position={[cx, parapetY, cz - D / 2]} castShadow>
+        <boxGeometry args={[W, 0.4, 0.12]} />
+        <meshStandardMaterial color="#cfcabf" roughness={0.9} />
+      </mesh>
+      <mesh position={[cx, parapetY, cz + D / 2]} castShadow>
+        <boxGeometry args={[W, 0.4, 0.12]} />
+        <meshStandardMaterial color="#cfcabf" roughness={0.9} />
+      </mesh>
+      <mesh position={[cx - W / 2, parapetY, cz]} castShadow>
+        <boxGeometry args={[0.12, 0.4, D]} />
+        <meshStandardMaterial color="#cfcabf" roughness={0.9} />
+      </mesh>
+      <mesh position={[cx + W / 2, parapetY, cz]} castShadow>
+        <boxGeometry args={[0.12, 0.4, D]} />
+        <meshStandardMaterial color="#cfcabf" roughness={0.9} />
+      </mesh>
+    </group>
   );
 }
 
@@ -111,12 +129,22 @@ function DoorLeaf({ d }: { d: Porta }) {
 
 function WindowPane({ j }: { j: Janela }) {
   const [x, z] = j.pos;
-  const size: [number, number, number] = j.axis === 'x' ? [j.w, j.h, 0.06] : [0.06, j.h, j.w];
+  const y = j.sill + j.h / 2;
+  const glass: [number, number, number] = j.axis === 'x' ? [j.w, j.h, 0.06] : [0.06, j.h, j.w];
+  const frame: [number, number, number] = j.axis === 'x' ? [j.w + 0.12, j.h + 0.12, 0.1] : [0.1, j.h + 0.12, j.w + 0.12];
   return (
-    <mesh position={[x, j.sill + j.h / 2, z]}>
-      <boxGeometry args={size} />
-      <meshStandardMaterial color="#a9c7e0" transparent opacity={0.35} roughness={0.05} metalness={0.2} depthWrite={false} />
-    </mesh>
+    <group position={[x, y, z]}>
+      {/* Moldura/esquadria */}
+      <mesh>
+        <boxGeometry args={frame} />
+        <meshStandardMaterial color="#2b2f36" roughness={0.5} metalness={0.3} />
+      </mesh>
+      {/* Vidro */}
+      <mesh>
+        <boxGeometry args={glass} />
+        <meshStandardMaterial color="#a9c7e0" transparent opacity={0.4} roughness={0.05} metalness={0.2} depthWrite={false} />
+      </mesh>
+    </group>
   );
 }
 
@@ -204,6 +232,9 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
   // Abre mostrando a casa pronta (mais bonito). O usuário liga "Seguindo
   // cronograma" para ver o estágio real da obra.
   const [auto, setAuto] = useState(false);
+  // Teto controlado pelo usuário (sempre visível quando ligado). Ligado = casa
+  // fechada e completa; desligado = espia o interior de cima.
+  const [teto, setTeto] = useState(true);
   const toggle = (k: keyof Finishes) => setManual((p) => ({ ...p, [k]: !p[k] }));
 
   // Em modo automático, os acabamentos vêm do progresso real das etapas.
@@ -213,7 +244,7 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
     <div className="relative w-full h-[400px] md:h-[600px] rounded-[2rem] overflow-hidden bg-gradient-to-b from-[#0d0e12] to-[#14161a] border border-white/5">
       <Canvas
         shadows
-        camera={{ position: [4, 11, 11], fov: 40 }}
+        camera={{ position: [10, 6.5, 12], fov: 36 }}
         dpr={[1, 2]}
         gl={{ antialias: true, toneMappingExposure: 1.15 }}
       >
@@ -275,10 +306,10 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
             <DoorLeaf key={i} d={d} />
           ))}
 
-          {/* Teto / forro sólido (some ao olhar de cima) — surge com a pintura pronta */}
-          {fin.pintura && (
+          {/* Telhado sólido + luminárias (controlado pelo botão "Teto") */}
+          {teto && (
             <>
-              <SmartCeiling />
+              <Roof />
               {ROOMS.map((r) => (
                 <CeilingFixture key={r.nome} room={r} on={fin.iluminacao} />
               ))}
@@ -333,6 +364,17 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
               <Icon size={13} /> {label}
             </button>
           ))}
+        </div>
+
+        <div className="mt-2 pt-2 border-t border-white/10">
+          <button
+            onClick={() => setTeto((t) => !t)}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              teto ? 'bg-[#ffb7c5] text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+            }`}
+          >
+            <Home size={13} /> Teto {teto ? '' : '(aberto)'}
+          </button>
         </div>
       </div>
 
