@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Html, OrbitControls } from '@react-three/drei';
+import { ContactShadows, Html, OrbitControls } from '@react-three/drei';
 import type { Mesh } from 'three';
 import { CalendarClock, Lightbulb, Layers, Paintbrush, Sofa } from 'lucide-react';
 import { APT, CENTER_OFFSET, DOORS, FURNITURE, ROOMS, WALLS, WINDOWS, type Janela, type Piece, type Porta, type Room } from '../lib/apartmentModel';
@@ -201,7 +201,9 @@ interface Props {
 
 export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
   const [manual, setManual] = useState<Finishes>({ piso: true, pintura: true, mobilia: true, iluminacao: true });
-  const [auto, setAuto] = useState(true);
+  // Abre mostrando a casa pronta (mais bonito). O usuário liga "Seguindo
+  // cronograma" para ver o estágio real da obra.
+  const [auto, setAuto] = useState(false);
   const toggle = (k: keyof Finishes) => setManual((p) => ({ ...p, [k]: !p[k] }));
 
   // Em modo automático, os acabamentos vêm do progresso real das etapas.
@@ -209,13 +211,48 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
 
   return (
     <div className="relative w-full h-[400px] md:h-[600px] rounded-[2rem] overflow-hidden bg-gradient-to-b from-[#0d0e12] to-[#14161a] border border-white/5">
-      <Canvas shadows camera={{ position: [1, 7, 14], fov: 38 }} dpr={[1, 2]}>
-        <color attach="background" args={['#0a0b0d']} />
-        <ambientLight intensity={fin.iluminacao ? 0.5 : 0.65} />
-        <directionalLight position={[8, 14, 6]} intensity={fin.iluminacao ? 0.8 : 1.1} castShadow shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-        <directionalLight position={[-6, 8, -4]} intensity={0.3} color="#ffb7c5" />
+      <Canvas
+        shadows
+        camera={{ position: [4, 11, 11], fov: 40 }}
+        dpr={[1, 2]}
+        gl={{ antialias: true, toneMappingExposure: 1.15 }}
+      >
+        <color attach="background" args={['#0b0c10']} />
+        <fog attach="fog" args={['#0b0c10', 22, 42]} />
+        <hemisphereLight args={['#ffffff', '#2b2d36', 0.75]} />
+        <ambientLight intensity={0.2} />
+        <directionalLight
+          position={[9, 16, 7]}
+          intensity={1.2}
+          castShadow
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-camera-far={45}
+          shadow-camera-left={-14}
+          shadow-camera-right={14}
+          shadow-camera-top={14}
+          shadow-camera-bottom={-14}
+          shadow-bias={-0.0004}
+        />
+        <directionalLight position={[-7, 9, -5]} intensity={0.35} color="#ffd9b0" />
+
+        {/* Chão do entorno (aterra) para ancorar a casa */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, 0]} receiveShadow>
+          <planeGeometry args={[80, 80]} />
+          <meshStandardMaterial color="#0c0d11" roughness={1} />
+        </mesh>
 
         <group position={CENTER_OFFSET}>
+          {/* Sombra de contato sob a casa */}
+          <ContactShadows
+            position={[APT.width / 2, 0.015, APT.depth / 2]}
+            scale={17}
+            resolution={1024}
+            blur={2.6}
+            opacity={0.55}
+            far={7}
+          />
+
           {/* Contrapiso base */}
           <mesh position={[APT.width / 2, 0, APT.depth / 2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
             <planeGeometry args={[APT.width, APT.depth]} />
