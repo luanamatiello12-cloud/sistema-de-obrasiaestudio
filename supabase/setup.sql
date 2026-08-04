@@ -81,6 +81,7 @@ alter table public.diario_obra       enable row level security;
 alter table public.pedidos_materiais enable row level security;
 alter table public.pontos_tecnicos   enable row level security;
 alter table public.profiles          enable row level security;
+alter table public.config            enable row level security;
 
 -- 3) Políticas
 -- Perfis: cada um vê o próprio; admin vê todos
@@ -149,6 +150,13 @@ create policy "ped_delete" on public.pedidos_materiais
 drop policy if exists "pontos_write" on public.pontos_tecnicos;
 create policy "pontos_write" on public.pontos_tecnicos
   for all to authenticated using (public.is_staff()) with check (public.is_staff());
+
+-- Config: todos leem; só ADMIN grava (ex.: URL do modelo 3D do projeto)
+drop policy if exists "config_select" on public.config;
+create policy "config_select" on public.config for select to authenticated using (true);
+drop policy if exists "config_write" on public.config;
+create policy "config_write" on public.config
+  for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- 4) Finalizar compra de forma atômica (aprovar pedido + lançar no financeiro)
 create or replace function public.finalizar_compra(

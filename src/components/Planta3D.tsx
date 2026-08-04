@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { ContactShadows, Html, OrbitControls } from '@react-three/drei';
-import { CalendarClock, ChevronLeft, ChevronRight, Home } from 'lucide-react';
+import { ContactShadows, Html, OrbitControls, useGLTF } from '@react-three/drei';
+import * as THREE from 'three';
+import { CalendarClock, ChevronLeft, ChevronRight, Home, Upload } from 'lucide-react';
+import { getModel3dUrl, setModel3dUrl, uploadModel } from '../lib/model3d';
 import {
   APT,
   CENTER_OFFSET,
@@ -226,16 +228,79 @@ function HotspotPin({ h, onOpen }: { h: Hotspot; onOpen: (tit: string, url: stri
   );
 }
 
+/** Modelo 3D real do projeto (.glb/.gltf), centralizado e escalado para caber. */
+function RealModel({ url }: { url: string }) {
+  const { scene } = useGLTF(url);
+  const cloned = useMemo(() => scene.clone(true), [scene]);
+  const ref = useRef<THREE.Group>(null);
+
+  useLayoutEffect(() => {
+    const box = new THREE.Box3().setFromObject(cloned);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.z) || 1;
+    const scale = 11 / maxDim; // caber ~11 m de largura, como o apê gerado
+    cloned.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) {
+        (o as THREE.Mesh).castShadow = true;
+        (o as THREE.Mesh).receiveShadow = true;
+      }
+    });
+    if (ref.current) {
+      ref.current.scale.setScalar(scale);
+      ref.current.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale);
+    }
+  }, [cloned]);
+
+  return (
+    <group ref={ref}>
+      <primitive object={cloned} />
+    </group>
+  );
+}
+
 interface Props {
   hotspots: Hotspot[];
   cronograma: CronogramaItem[];
   onOpenRaioX: (tit: string, url: string) => void;
+  canUpload: boolean;
 }
 
-export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
+export default function Planta3D({ hotspots, cronograma, onOpenRaioX, canUpload }: Props) {
   // Abre na casa pronta (última fase). O cliente arrasta para "voltar no tempo".
   const [step, setStep] = useState(PHASES.length - 1);
   const [teto, setTeto] = useState(true);
+  const [modelUrl, setModelUrl] = useState<string | null>(null);
+  const [modo, setModo] = useState<'gerado' | 'real'>('gerado');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    getModel3dUrl().then((url) => {
+      if (url) {
+        setModelUrl(url);
+        setModo('real');
+      }
+    });
+  }, []);
+
+  const carregarModelo = async (url: string) => {
+    setModelUrl(url);
+    setModo('real');
+    await setModel3dUrl(url);
+  };
+
+  const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setBusy(true);
+    try {
+      const url = await uploadModel(file);
+      await carregarModelo(url);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const fase = PHASES[step];
   const wallStage: WallStage = step >= 7 ? 'pintura' : step >= 5 ? 'reboco' : 'bloco';
@@ -285,100 +350,146 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
           <meshStandardMaterial color="#0c0d11" roughness={1} />
         </mesh>
 
-        <group position={CENTER_OFFSET}>
-          <ContactShadows position={[APT.width / 2, 0.02, APT.depth / 2]} scale={17} resolution={1024} blur={2.6} opacity={0.55} far={7} />
+        <ContactShadows position={[0, 0.02, 0]} scale={17} resolution={1024} blur={2.6} opacity={0.55} far={7} />
 
-          {/* Lote / contrapiso da obra */}
-          <mesh position={[APT.width / 2, 0, APT.depth / 2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-            <planeGeometry args={[APT.width, APT.depth]} />
-            <meshStandardMaterial color={padConcrete ? '#3a3d44' : '#5a4a38'} roughness={0.98} />
-          </mesh>
+        {modo === 'real' && modelUrl ? (
+          <Suspense fallback={null}>
+            <RealModel url={modelUrl} />
+          </Suspense>
+        ) : (
+          <group position={CENTER_OFFSET}>
+            {/* Lote / contrapiso da obra */}
+            <mesh position={[APT.width / 2, 0, APT.depth / 2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+              <planeGeometry args={[APT.width, APT.depth]} />
+              <meshStandardMaterial color={padConcrete ? '#3a3d44' : '#5a4a38'} roughness={0.98} />
+            </mesh>
 
-          {showFooting && WALLS.map((seg, i) => <Footing key={i} seg={seg} />)}
-          {showFloor && ROOMS.map((r) => <RoomFloor key={r.nome} room={r} />)}
-          {showWalls && WALLS.map((seg, i) => <Wall key={i} seg={seg} stage={wallStage} />)}
-          {showPipes && INSTALACOES.map((t, i) => <Pipe key={i} t={t} />)}
-          {showWindows && WINDOWS.map((j, i) => <WindowPane key={i} j={j} glass={showGlass} />)}
-          {showDoors && DOORS.map((d, i) => <DoorLeaf key={i} d={d} />)}
+            {showFooting && WALLS.map((seg, i) => <Footing key={i} seg={seg} />)}
+            {showFloor && ROOMS.map((r) => <RoomFloor key={r.nome} room={r} />)}
+            {showWalls && WALLS.map((seg, i) => <Wall key={i} seg={seg} stage={wallStage} />)}
+            {showPipes && INSTALACOES.map((t, i) => <Pipe key={i} t={t} />)}
+            {showWindows && WINDOWS.map((j, i) => <WindowPane key={i} j={j} glass={showGlass} />)}
+            {showDoors && DOORS.map((d, i) => <DoorLeaf key={i} d={d} />)}
 
-          {showRoof && teto && <Roof />}
-          {showFixtures && ROOMS.map((r) => <CeilingFixture key={r.nome} room={r} lit={fixturesLit} />)}
+            {showRoof && teto && <Roof />}
+            {showFixtures && ROOMS.map((r) => <CeilingFixture key={r.nome} room={r} lit={fixturesLit} />)}
 
-          {showFurniture && (
-            <>
-              {FURNITURE.map((p, i) => (
-                <Furniture key={i} piece={p} />
-              ))}
-              <Plant pos={[0.5, 0.5]} />
-              <Plant pos={[7.4, 3.6]} />
-              <Plant pos={[11.4, 0.5]} />
-            </>
-          )}
+            {showFurniture && (
+              <>
+                {FURNITURE.map((p, i) => (
+                  <Furniture key={i} piece={p} />
+                ))}
+                <Plant pos={[0.5, 0.5]} />
+                <Plant pos={[7.4, 3.6]} />
+                <Plant pos={[11.4, 0.5]} />
+              </>
+            )}
 
-          {showLights && ROOMS.map((r) => <RoomLight key={r.nome} room={r} />)}
-          {showPins && hotspots.map((h) => <HotspotPin key={h.id} h={h} onOpen={onOpenRaioX} />)}
-        </group>
+            {showLights && ROOMS.map((r) => <RoomLight key={r.nome} room={r} />)}
+            {showPins && hotspots.map((h) => <HotspotPin key={h.id} h={h} onOpen={onOpenRaioX} />)}
+          </group>
+        )}
 
         <OrbitControls enablePan minDistance={6} maxDistance={26} maxPolarAngle={Math.PI / 2.15} target={[0, 0, 0]} />
       </Canvas>
 
-      {/* Linha do tempo da obra */}
+      {/* Painel: linha do tempo (gerado) ou modelo real, + upload do Engenheiro */}
       <div className="absolute top-3 left-3 w-[240px] max-w-[calc(100%-1.5rem)] bg-black/75 backdrop-blur-md p-3 rounded-2xl border border-white/10">
-        <p className="text-[9px] font-black text-[#ffb7c5] uppercase tracking-widest mb-2">Acompanhe a obra</p>
-
-        <div className="flex items-center gap-3 mb-3">
-          <button
-            onClick={() => go(-1)}
-            disabled={step === 0}
-            aria-label="Etapa anterior"
-            className="shrink-0 w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center disabled:opacity-30 transition-all"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest">
-              Etapa {step + 1} de {PHASES.length}
-            </p>
-            <p className="text-sm font-black uppercase italic tracking-tight text-white truncate">{fase.nome}</p>
-            <p className="text-[9px] text-gray-400 font-medium leading-tight">{fase.desc}</p>
+        {modelUrl && (
+          <div className="flex gap-1 bg-white/5 p-1 rounded-xl mb-3">
+            {(['gerado', 'real'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setModo(m)}
+                className={`flex-1 px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                  modo === m ? 'bg-[#ffb7c5] text-black' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                {m === 'gerado' ? 'Gerado' : 'Modelo real'}
+              </button>
+            ))}
           </div>
-          <button
-            onClick={() => go(1)}
-            disabled={step === PHASES.length - 1}
-            aria-label="Próxima etapa"
-            className="shrink-0 w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center disabled:opacity-30 transition-all"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        )}
 
-        <input
-          type="range"
-          min={0}
-          max={PHASES.length - 1}
-          value={step}
-          onChange={(e) => setStep(Number(e.target.value))}
-          className="w-full"
-          style={{ accentColor: '#ffb7c5' }}
-          aria-label="Fase da obra"
-        />
+        {modo === 'gerado' ? (
+          <>
+            <p className="text-[9px] font-black text-[#ffb7c5] uppercase tracking-widest mb-2">Acompanhe a obra</p>
 
-        <div className="flex items-center gap-2 mt-3">
-          <button
-            onClick={() => setStep(stepFromCronograma(cronograma))}
-            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-500/90 text-black hover:bg-emerald-400 transition-all"
-          >
-            <CalendarClock size={12} /> Obra hoje
-          </button>
-          <button
-            onClick={() => setTeto((t) => !t)}
-            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-              teto ? 'bg-[#ffb7c5] text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
-            }`}
-          >
-            <Home size={12} /> Teto
-          </button>
-        </div>
+            <div className="flex items-center gap-3 mb-3">
+              <button
+                onClick={() => go(-1)}
+                disabled={step === 0}
+                aria-label="Etapa anterior"
+                className="shrink-0 w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center disabled:opacity-30 transition-all"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <div className="flex-1 min-w-0">
+                <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest">
+                  Etapa {step + 1} de {PHASES.length}
+                </p>
+                <p className="text-sm font-black uppercase italic tracking-tight text-white truncate">{fase.nome}</p>
+                <p className="text-[9px] text-gray-400 font-medium leading-tight">{fase.desc}</p>
+              </div>
+              <button
+                onClick={() => go(1)}
+                disabled={step === PHASES.length - 1}
+                aria-label="Próxima etapa"
+                className="shrink-0 w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center disabled:opacity-30 transition-all"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            <input
+              type="range"
+              min={0}
+              max={PHASES.length - 1}
+              value={step}
+              onChange={(e) => setStep(Number(e.target.value))}
+              className="w-full"
+              style={{ accentColor: '#ffb7c5' }}
+              aria-label="Fase da obra"
+            />
+
+            <div className="flex items-center gap-2 mt-3">
+              <button
+                onClick={() => setStep(stepFromCronograma(cronograma))}
+                className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-500/90 text-black hover:bg-emerald-400 transition-all"
+              >
+                <CalendarClock size={12} /> Obra hoje
+              </button>
+              <button
+                onClick={() => setTeto((t) => !t)}
+                className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                  teto ? 'bg-[#ffb7c5] text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+              >
+                <Home size={12} /> Teto
+              </button>
+            </div>
+          </>
+        ) : (
+          <div>
+            <p className="text-[9px] font-black text-[#ffb7c5] uppercase tracking-widest mb-1">Modelo do projeto</p>
+            <p className="text-[10px] text-gray-400 font-medium leading-snug">Modelo 3D real carregado. Arraste para girar e role para dar zoom.</p>
+          </div>
+        )}
+
+        {canUpload && (
+          <div className="mt-3 pt-3 border-t border-white/10 flex gap-2">
+            <label className="flex-1 cursor-pointer flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-blue-600 hover:bg-blue-500 transition-all">
+              <input type="file" accept=".glb,.gltf" className="hidden" onChange={onUpload} />
+              <Upload size={12} /> {busy ? 'Enviando...' : 'Subir .glb'}
+            </label>
+            <button
+              onClick={() => carregarModelo('/modelo-exemplo.gltf')}
+              className="px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-white/5 text-gray-300 hover:bg-white/10 transition-all"
+            >
+              Exemplo
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="absolute bottom-4 right-4 bg-black/60 px-3 py-2 rounded-xl">

@@ -54,6 +54,12 @@ create table if not exists public.pontos_tecnicos (
   pos_y numeric not null
 );
 
+-- Configurações gerais (chave/valor). Ex.: URL do modelo 3D real do projeto.
+create table if not exists public.config (
+  chave text primary key,
+  valor text
+);
+
 -- Habilitar realtime nas tabelas
 alter publication supabase_realtime add table public.chat_mensagens;
 alter publication supabase_realtime add table public.obra_cronograma;
