@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useState } from 'react';
 import { motion } from 'motion/react';
-import { Box, Calendar, Map, Plus, X } from 'lucide-react';
+import { Box, Calendar, Map, Plus, Sparkles, X } from 'lucide-react';
 import { plantaAssets } from '../../lib/assets';
 import { can } from '../../lib/permissions';
 import type { CronogramaItem, Hotspot, UserState } from '../../types';
@@ -42,6 +42,7 @@ export default function Projeto({
   });
   const [placing, setPlacing] = useState(false);
   const [view, setView] = useState<'2d' | '3d'>('2d');
+  const [showCraftsman, setShowCraftsman] = useState(false);
   const planta = plantaAssets();
 
   const isAnyLayerActive = layers.hidraulica || layers.eletrica || layers.clima;
@@ -88,20 +89,28 @@ export default function Projeto({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 space-y-4">
-          {/* Seletor Planta 2D / Vista 3D */}
-          <div className="flex gap-1 bg-[#14161a] p-1.5 rounded-2xl border border-white/5 w-fit">
-            {(['2d', '3d'] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  view === v ? 'bg-[#ffb7c5] text-black' : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {v === '2d' ? <Map size={13} /> : <Box size={13} />}
-                {v === '2d' ? 'Planta 2D' : 'Vista 3D'}
-              </button>
-            ))}
+          {/* Seletor Planta 2D / Vista 3D + Tour realista */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex gap-1 bg-[#14161a] p-1.5 rounded-2xl border border-white/5 w-fit">
+              {(['2d', '3d'] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    view === v ? 'bg-[#ffb7c5] text-black' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {v === '2d' ? <Map size={13} /> : <Box size={13} />}
+                  {v === '2d' ? 'Planta 2D' : 'Vista 3D'}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowCraftsman(true)}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest bg-gradient-to-r from-amber-500 to-[#ffb7c5] text-black hover:brightness-110 transition-all shadow-lg"
+            >
+              <Sparkles size={13} /> Casa Realista
+            </button>
           </div>
 
           {view === '3d' ? (
@@ -230,6 +239,19 @@ export default function Projeto({
           </div>
         </div>
       </div>
+
+      {/* Tour imersivo em tela cheia (cena realista) */}
+      {showCraftsman && (
+        <div className="fixed inset-0 z-[8000] bg-black">
+          <iframe src="/craftsman.html" title="Casa realista — tour imersivo" className="w-full h-full border-0" />
+          <button
+            onClick={() => setShowCraftsman(false)}
+            className="absolute top-4 right-4 z-[8100] bg-black/80 hover:bg-black text-white px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg"
+          >
+            <X size={16} /> Fechar
+          </button>
+        </div>
+      )}
     </motion.section>
   );
 }
