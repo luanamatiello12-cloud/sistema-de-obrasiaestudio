@@ -1,30 +1,41 @@
 import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { ContactShadows, Html, OrbitControls } from '@react-three/drei';
-import { CalendarClock, Home, Lightbulb, Layers, Paintbrush, Sofa } from 'lucide-react';
-import { APT, CENTER_OFFSET, DOORS, FURNITURE, ROOMS, WALLS, WINDOWS, type Janela, type Piece, type Porta, type Room } from '../lib/apartmentModel';
+import { CalendarClock, ChevronLeft, ChevronRight, Home } from 'lucide-react';
+import {
+  APT,
+  CENTER_OFFSET,
+  DOORS,
+  FURNITURE,
+  INSTALACOES,
+  PHASES,
+  ROOMS,
+  WALLS,
+  WINDOWS,
+  type Janela,
+  type Piece,
+  type Porta,
+  type Room,
+  type Tubo,
+} from '../lib/apartmentModel';
 import type { CronogramaItem, Hotspot } from '../types';
 
-interface Finishes {
-  piso: boolean;
-  pintura: boolean;
-  mobilia: boolean;
-  iluminacao: boolean;
+type WallStage = 'bloco' | 'reboco' | 'pintura';
+
+const WALL_MAT: Record<WallStage, { color: string; roughness: number }> = {
+  bloco: { color: '#a58c78', roughness: 0.98 },
+  reboco: { color: '#bcb8b0', roughness: 0.9 },
+  pintura: { color: '#efece6', roughness: 0.65 },
+};
+
+/** Etapa da obra (0..8) derivada do progresso médio do cronograma. */
+function stepFromCronograma(cronograma: CronogramaItem[]): number {
+  if (!cronograma.length) return PHASES.length - 1;
+  const avg = cronograma.reduce((a, c) => a + c.progresso, 0) / cronograma.length;
+  return Math.max(0, Math.min(PHASES.length - 1, Math.round((avg / 100) * (PHASES.length - 1))));
 }
 
-/** Deriva os acabamentos a partir do progresso real das etapas do cronograma. */
-function finishesFromCronograma(cronograma: CronogramaItem[]): Finishes {
-  const prog = (part: string) =>
-    cronograma.find((c) => c.etapa.toLowerCase().includes(part))?.progresso ?? 0;
-  return {
-    piso: prog('contrapiso') >= 80,
-    pintura: prog('pintura') >= 40,
-    mobilia: prog('marcenaria') >= 40,
-    iluminacao: prog('elétr') >= 40 || prog('eletr') >= 40,
-  };
-}
-
-function Wall({ seg, painted }: { seg: [number, number, number, number]; painted: boolean }) {
+function Wall({ seg, stage }: { seg: [number, number, number, number]; stage: WallStage }) {
   const [x1, z1, x2, z2] = seg;
   const horizontal = z1 === z2;
   const len = horizontal ? Math.abs(x2 - x1) : Math.abs(z2 - z1);
@@ -33,36 +44,42 @@ function Wall({ seg, painted }: { seg: [number, number, number, number]; painted
   const size: [number, number, number] = horizontal
     ? [len, APT.wallHeight, APT.wallThickness]
     : [APT.wallThickness, APT.wallHeight, len];
-
+  const m = WALL_MAT[stage];
   return (
     <mesh position={[cx, APT.wallHeight / 2, cz]} castShadow receiveShadow>
       <boxGeometry args={size} />
-      <meshStandardMaterial
-        color={painted ? '#efece6' : '#8a8f98'}
-        transparent
-        opacity={painted ? 0.78 : 0.32}
-        roughness={0.7}
-        metalness={0.05}
-      />
+      <meshStandardMaterial color={m.color} roughness={m.roughness} metalness={0.02} />
     </mesh>
   );
 }
 
-function RoomFloor({ room, piso }: { room: Room; piso: boolean }) {
+/** Baldrame / fundação sob as paredes. */
+function Footing({ seg }: { seg: [number, number, number, number] }) {
+  const [x1, z1, x2, z2] = seg;
+  const horizontal = z1 === z2;
+  const len = horizontal ? Math.abs(x2 - x1) : Math.abs(z2 - z1);
+  const cx = (x1 + x2) / 2;
+  const cz = (z1 + z2) / 2;
+  const t = APT.wallThickness + 0.14;
+  const size: [number, number, number] = horizontal ? [len, 0.3, t] : [t, 0.3, len];
+  return (
+    <mesh position={[cx, 0.15, cz]} castShadow receiveShadow>
+      <boxGeometry args={size} />
+      <meshStandardMaterial color="#4b4e56" roughness={0.95} />
+    </mesh>
+  );
+}
+
+function RoomFloor({ room }: { room: Room }) {
   const [x1, z1, x2, z2] = room.rect;
   const w = Math.abs(x2 - x1);
   const d = Math.abs(z2 - z1);
   const cx = (x1 + x2) / 2;
   const cz = (z1 + z2) / 2;
   return (
-    <mesh position={[cx, 0.02, cz]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <mesh position={[cx, 0.03, cz]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
       <planeGeometry args={[w - 0.08, d - 0.08]} />
-      <meshStandardMaterial
-        color={piso ? room.piso : room.cor}
-        transparent
-        opacity={piso ? 0.95 : 0.28}
-        roughness={0.85}
-      />
+      <meshStandardMaterial color={room.piso} roughness={0.8} metalness={0.05} />
     </mesh>
   );
 }
@@ -79,7 +96,16 @@ function Furniture({ piece }: { piece: Piece }) {
   );
 }
 
-/** Telhado: laje de cobertura + platibanda (mureta na borda), como um prédio real. */
+function Pipe({ t }: { t: Tubo }) {
+  return (
+    <mesh position={t.pos} castShadow>
+      <boxGeometry args={t.size} />
+      <meshStandardMaterial color={t.cor} roughness={0.4} metalness={0.2} emissive={t.cor} emissiveIntensity={0.15} />
+    </mesh>
+  );
+}
+
+/** Telhado: laje + platibanda. */
 function Roof() {
   const W = APT.width + 0.3;
   const D = APT.depth + 0.3;
@@ -89,12 +115,10 @@ function Roof() {
   const cz = APT.depth / 2;
   return (
     <group>
-      {/* Laje de cobertura */}
       <mesh position={[cx, slabY, cz]} castShadow receiveShadow>
         <boxGeometry args={[W, 0.16, D]} />
         <meshStandardMaterial color="#d9d5cd" roughness={0.9} />
       </mesh>
-      {/* Platibanda */}
       <mesh position={[cx, parapetY, cz - D / 2]} castShadow>
         <boxGeometry args={[W, 0.4, 0.12]} />
         <meshStandardMaterial color="#cfcabf" roughness={0.9} />
@@ -115,6 +139,27 @@ function Roof() {
   );
 }
 
+function WindowPane({ j, glass }: { j: Janela; glass: boolean }) {
+  const [x, z] = j.pos;
+  const y = j.sill + j.h / 2;
+  const glassSize: [number, number, number] = j.axis === 'x' ? [j.w, j.h, 0.06] : [0.06, j.h, j.w];
+  const frame: [number, number, number] = j.axis === 'x' ? [j.w + 0.12, j.h + 0.12, 0.1] : [0.1, j.h + 0.12, j.w + 0.12];
+  return (
+    <group position={[x, y, z]}>
+      <mesh>
+        <boxGeometry args={frame} />
+        <meshStandardMaterial color="#2b2f36" roughness={0.5} metalness={0.3} />
+      </mesh>
+      {glass && (
+        <mesh>
+          <boxGeometry args={glassSize} />
+          <meshStandardMaterial color="#a9c7e0" transparent opacity={0.4} roughness={0.05} metalness={0.2} depthWrite={false} />
+        </mesh>
+      )}
+    </group>
+  );
+}
+
 function DoorLeaf({ d }: { d: Porta }) {
   const base = d.axis === 'x' ? 0 : Math.PI / 2;
   return (
@@ -127,37 +172,12 @@ function DoorLeaf({ d }: { d: Porta }) {
   );
 }
 
-function WindowPane({ j }: { j: Janela }) {
-  const [x, z] = j.pos;
-  const y = j.sill + j.h / 2;
-  const glass: [number, number, number] = j.axis === 'x' ? [j.w, j.h, 0.06] : [0.06, j.h, j.w];
-  const frame: [number, number, number] = j.axis === 'x' ? [j.w + 0.12, j.h + 0.12, 0.1] : [0.1, j.h + 0.12, j.w + 0.12];
-  return (
-    <group position={[x, y, z]}>
-      {/* Moldura/esquadria */}
-      <mesh>
-        <boxGeometry args={frame} />
-        <meshStandardMaterial color="#2b2f36" roughness={0.5} metalness={0.3} />
-      </mesh>
-      {/* Vidro */}
-      <mesh>
-        <boxGeometry args={glass} />
-        <meshStandardMaterial color="#a9c7e0" transparent opacity={0.4} roughness={0.05} metalness={0.2} depthWrite={false} />
-      </mesh>
-    </group>
-  );
-}
-
-function CeilingFixture({ room, on }: { room: Room; on: boolean }) {
+function CeilingFixture({ room, lit }: { room: Room; lit: boolean }) {
   const [x1, z1, x2, z2] = room.rect;
   return (
     <mesh position={[(x1 + x2) / 2, APT.wallHeight - 0.06, (z1 + z2) / 2]} rotation={[-Math.PI / 2, 0, 0]}>
       <circleGeometry args={[0.18, 20]} />
-      <meshStandardMaterial
-        color={on ? '#fff3d6' : '#c7ccd1'}
-        emissive={on ? '#ffcf87' : '#000000'}
-        emissiveIntensity={on ? 1.4 : 0}
-      />
+      <meshStandardMaterial color={lit ? '#fff3d6' : '#c7ccd1'} emissive={lit ? '#ffcf87' : '#000000'} emissiveIntensity={lit ? 1.4 : 0} />
     </mesh>
   );
 }
@@ -180,15 +200,7 @@ function Plant({ pos }: { pos: [number, number] }) {
 
 function RoomLight({ room }: { room: Room }) {
   const [x1, z1, x2, z2] = room.rect;
-  return (
-    <pointLight
-      position={[(x1 + x2) / 2, 2.35, (z1 + z2) / 2]}
-      intensity={7}
-      distance={6}
-      decay={2}
-      color="#ffe6bf"
-    />
-  );
+  return <pointLight position={[(x1 + x2) / 2, 2.35, (z1 + z2) / 2]} intensity={6} distance={6} decay={2} color="#ffe6bf" />;
 }
 
 function HotspotPin({ h, onOpen }: { h: Hotspot; onOpen: (tit: string, url: string) => void }) {
@@ -200,8 +212,8 @@ function HotspotPin({ h, onOpen }: { h: Hotspot; onOpen: (tit: string, url: stri
         onClick={() => onOpen(h.nome_comodo, h.url_foto_interna)}
         title={`Ver foto de ${h.nome_comodo}`}
         style={{
-          width: 22,
-          height: 22,
+          width: 20,
+          height: 20,
           borderRadius: '50%',
           background: '#ffb7c5',
           border: '2px solid #fff',
@@ -214,13 +226,6 @@ function HotspotPin({ h, onOpen }: { h: Hotspot; onOpen: (tit: string, url: stri
   );
 }
 
-const FINISH_ITEMS: { key: keyof Finishes; label: string; Icon: typeof Layers }[] = [
-  { key: 'piso', label: 'Piso', Icon: Layers },
-  { key: 'pintura', label: 'Pintura', Icon: Paintbrush },
-  { key: 'mobilia', label: 'Mobília', Icon: Sofa },
-  { key: 'iluminacao', label: 'Iluminação', Icon: Lightbulb },
-];
-
 interface Props {
   hotspots: Hotspot[];
   cronograma: CronogramaItem[];
@@ -228,26 +233,33 @@ interface Props {
 }
 
 export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
-  const [manual, setManual] = useState<Finishes>({ piso: true, pintura: true, mobilia: true, iluminacao: true });
-  // Abre mostrando a casa pronta (mais bonito). O usuário liga "Seguindo
-  // cronograma" para ver o estágio real da obra.
-  const [auto, setAuto] = useState(false);
-  // Teto controlado pelo usuário (sempre visível quando ligado). Ligado = casa
-  // fechada e completa; desligado = espia o interior de cima.
+  // Abre na casa pronta (última fase). O cliente arrasta para "voltar no tempo".
+  const [step, setStep] = useState(PHASES.length - 1);
   const [teto, setTeto] = useState(true);
-  const toggle = (k: keyof Finishes) => setManual((p) => ({ ...p, [k]: !p[k] }));
 
-  // Em modo automático, os acabamentos vêm do progresso real das etapas.
-  const fin = auto ? finishesFromCronograma(cronograma) : manual;
+  const fase = PHASES[step];
+  const wallStage: WallStage = step >= 7 ? 'pintura' : step >= 5 ? 'reboco' : 'bloco';
+
+  const showFooting = step >= 1;
+  const showWalls = step >= 2;
+  const showRoof = step >= 3;
+  const showPipes = step === 4;
+  const showFloor = step >= 6;
+  const showFixtures = step >= 5;
+  const fixturesLit = step >= 7;
+  const showLights = step >= 7;
+  const showWindows = step >= 7;
+  const showGlass = step >= 8;
+  const showDoors = step >= 8;
+  const showFurniture = step >= 8;
+  const showPins = step >= 2;
+  const padConcrete = step >= 1;
+
+  const go = (delta: number) => setStep((s) => Math.max(0, Math.min(PHASES.length - 1, s + delta)));
 
   return (
     <div className="relative w-full h-[400px] md:h-[600px] rounded-[2rem] overflow-hidden bg-gradient-to-b from-[#0d0e12] to-[#14161a] border border-white/5">
-      <Canvas
-        shadows
-        camera={{ position: [10, 6.5, 12], fov: 36 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true, toneMappingExposure: 1.15 }}
-      >
+      <Canvas shadows camera={{ position: [10, 6.5, 12], fov: 36 }} dpr={[1, 2]} gl={{ antialias: true, toneMappingExposure: 1.15 }}>
         <color attach="background" args={['#0b0c10']} />
         <fog attach="fog" args={['#0b0c10', 22, 42]} />
         <hemisphereLight args={['#ffffff', '#2b2d36', 0.75]} />
@@ -267,56 +279,32 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
         />
         <directionalLight position={[-7, 9, -5]} intensity={0.35} color="#ffd9b0" />
 
-        {/* Chão do entorno (aterra) para ancorar a casa */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.03, 0]} receiveShadow>
+        {/* Terreno do entorno */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]} receiveShadow>
           <planeGeometry args={[80, 80]} />
           <meshStandardMaterial color="#0c0d11" roughness={1} />
         </mesh>
 
         <group position={CENTER_OFFSET}>
-          {/* Sombra de contato sob a casa */}
-          <ContactShadows
-            position={[APT.width / 2, 0.015, APT.depth / 2]}
-            scale={17}
-            resolution={1024}
-            blur={2.6}
-            opacity={0.55}
-            far={7}
-          />
+          <ContactShadows position={[APT.width / 2, 0.02, APT.depth / 2]} scale={17} resolution={1024} blur={2.6} opacity={0.55} far={7} />
 
-          {/* Contrapiso base */}
+          {/* Lote / contrapiso da obra */}
           <mesh position={[APT.width / 2, 0, APT.depth / 2]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
             <planeGeometry args={[APT.width, APT.depth]} />
-            <meshStandardMaterial color="#15171c" roughness={0.95} />
+            <meshStandardMaterial color={padConcrete ? '#3a3d44' : '#5a4a38'} roughness={0.98} />
           </mesh>
 
-          {ROOMS.map((r) => (
-            <RoomFloor key={r.nome} room={r} piso={fin.piso} />
-          ))}
+          {showFooting && WALLS.map((seg, i) => <Footing key={i} seg={seg} />)}
+          {showFloor && ROOMS.map((r) => <RoomFloor key={r.nome} room={r} />)}
+          {showWalls && WALLS.map((seg, i) => <Wall key={i} seg={seg} stage={wallStage} />)}
+          {showPipes && INSTALACOES.map((t, i) => <Pipe key={i} t={t} />)}
+          {showWindows && WINDOWS.map((j, i) => <WindowPane key={i} j={j} glass={showGlass} />)}
+          {showDoors && DOORS.map((d, i) => <DoorLeaf key={i} d={d} />)}
 
-          {WALLS.map((seg, i) => (
-            <Wall key={i} seg={seg} painted={fin.pintura} />
-          ))}
+          {showRoof && teto && <Roof />}
+          {showFixtures && ROOMS.map((r) => <CeilingFixture key={r.nome} room={r} lit={fixturesLit} />)}
 
-          {WINDOWS.map((j, i) => (
-            <WindowPane key={i} j={j} />
-          ))}
-
-          {DOORS.map((d, i) => (
-            <DoorLeaf key={i} d={d} />
-          ))}
-
-          {/* Telhado sólido + luminárias (controlado pelo botão "Teto") */}
-          {teto && (
-            <>
-              <Roof />
-              {ROOMS.map((r) => (
-                <CeilingFixture key={r.nome} room={r} on={fin.iluminacao} />
-              ))}
-            </>
-          )}
-
-          {fin.mobilia && (
+          {showFurniture && (
             <>
               {FURNITURE.map((p, i) => (
                 <Furniture key={i} piece={p} />
@@ -327,58 +315,72 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX }: Props) {
             </>
           )}
 
-          {fin.iluminacao && ROOMS.map((r) => <RoomLight key={r.nome} room={r} />)}
-
-          {hotspots.map((h) => (
-            <HotspotPin key={h.id} h={h} onOpen={onOpenRaioX} />
-          ))}
+          {showLights && ROOMS.map((r) => <RoomLight key={r.nome} room={r} />)}
+          {showPins && hotspots.map((h) => <HotspotPin key={h.id} h={h} onOpen={onOpenRaioX} />)}
         </group>
 
         <OrbitControls enablePan minDistance={6} maxDistance={26} maxPolarAngle={Math.PI / 2.15} target={[0, 0, 0]} />
       </Canvas>
 
-      {/* Botões de acabamento (etapas) */}
-      <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-md p-3 rounded-2xl border border-white/10 w-[178px]">
-        <p className="text-[9px] font-black text-[#ffb7c5] uppercase tracking-widest mb-3">Acabamentos</p>
+      {/* Linha do tempo da obra */}
+      <div className="absolute top-3 left-3 w-[240px] max-w-[calc(100%-1.5rem)] bg-black/75 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+        <p className="text-[9px] font-black text-[#ffb7c5] uppercase tracking-widest mb-2">Acompanhe a obra</p>
 
-        <button
-          onClick={() => setAuto((a) => !a)}
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all mb-2 ${
-            auto ? 'bg-emerald-500/90 text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
-          }`}
-        >
-          <CalendarClock size={13} /> {auto ? 'Seguindo cronograma' : 'Modo manual'}
-        </button>
-
-        <div className="flex flex-col gap-2">
-          {FINISH_ITEMS.map(({ key, label, Icon }) => (
-            <button
-              key={key}
-              onClick={() => !auto && toggle(key)}
-              disabled={auto}
-              title={auto ? 'Controlado pelo cronograma' : undefined}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                fin[key] ? 'bg-[#ffb7c5] text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
-              } ${auto ? 'cursor-default opacity-90' : ''}`}
-            >
-              <Icon size={13} /> {label}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 mb-3">
+          <button
+            onClick={() => go(-1)}
+            disabled={step === 0}
+            aria-label="Etapa anterior"
+            className="shrink-0 w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center disabled:opacity-30 transition-all"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest">
+              Etapa {step + 1} de {PHASES.length}
+            </p>
+            <p className="text-sm font-black uppercase italic tracking-tight text-white truncate">{fase.nome}</p>
+            <p className="text-[9px] text-gray-400 font-medium leading-tight">{fase.desc}</p>
+          </div>
+          <button
+            onClick={() => go(1)}
+            disabled={step === PHASES.length - 1}
+            aria-label="Próxima etapa"
+            className="shrink-0 w-8 h-8 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center disabled:opacity-30 transition-all"
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
 
-        <div className="mt-2 pt-2 border-t border-white/10">
+        <input
+          type="range"
+          min={0}
+          max={PHASES.length - 1}
+          value={step}
+          onChange={(e) => setStep(Number(e.target.value))}
+          className="w-full"
+          style={{ accentColor: '#ffb7c5' }}
+          aria-label="Fase da obra"
+        />
+
+        <div className="flex items-center gap-2 mt-3">
+          <button
+            onClick={() => setStep(stepFromCronograma(cronograma))}
+            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-500/90 text-black hover:bg-emerald-400 transition-all"
+          >
+            <CalendarClock size={12} /> Obra hoje
+          </button>
           <button
             onClick={() => setTeto((t) => !t)}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+            className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
               teto ? 'bg-[#ffb7c5] text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'
             }`}
           >
-            <Home size={13} /> Teto {teto ? '' : '(aberto)'}
+            <Home size={12} /> Teto
           </button>
         </div>
       </div>
 
-      {/* Dica de navegação */}
       <div className="absolute bottom-4 right-4 bg-black/60 px-3 py-2 rounded-xl">
         <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Arraste para girar · role para zoom</p>
       </div>

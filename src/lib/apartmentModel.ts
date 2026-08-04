@@ -132,5 +132,41 @@ export const DOORS: Porta[] = [
   { hinge: [6, 6], w: 0.8, axis: 'z', swing: -0.6 }, // banho ↔ quarto
 ];
 
+/** Fases da obra, na ordem em que o cliente acompanha a construção. */
+export const PHASES = [
+  { nome: 'Terreno', desc: 'Terreno preparado e nivelado' },
+  { nome: 'Fundação', desc: 'Sapatas, baldrame e contrapiso' },
+  { nome: 'Alvenaria', desc: 'Paredes erguidas em blocos' },
+  { nome: 'Cobertura', desc: 'Laje e telhado executados' },
+  { nome: 'Instalações', desc: 'Hidráulica e elétrica embutidas' },
+  { nome: 'Reboco & Gesso', desc: 'Paredes rebocadas e forro' },
+  { nome: 'Contrapiso & Piso', desc: 'Pisos assentados' },
+  { nome: 'Pintura', desc: 'Pintura e esquadrias' },
+  { nome: 'Acabamento', desc: 'Marcenaria, mobília e entrega' },
+] as const;
+
+/** Tubos/eletrodutos das instalações (fase 4), simplificados. */
+export interface Tubo {
+  pos: [number, number, number];
+  size: [number, number, number];
+  cor: string;
+}
+
+export const INSTALACOES: Tubo[] = [
+  // Hidráulica cozinha (azul = fria, vermelho = quente) + ralo
+  { pos: [10, 0.5, 0.35], size: [3.2, 0.07, 0.07], cor: '#38bdf8' },
+  { pos: [10, 0.62, 0.35], size: [3.2, 0.06, 0.06], cor: '#f87171' },
+  { pos: [11.6, 0.5, 0.35], size: [0.07, 1.0, 0.07], cor: '#38bdf8' },
+  // Hidráulica banho
+  { pos: [4.6, 0.5, 7.5], size: [2.3, 0.07, 0.07], cor: '#38bdf8' },
+  { pos: [4.6, 0.62, 7.5], size: [2.3, 0.06, 0.06], cor: '#f87171' },
+  { pos: [4.0, 0.5, 7.5], size: [0.07, 1.0, 0.07], cor: '#38bdf8' },
+  { pos: [4.0, 0.12, 6.5], size: [0.11, 0.11, 2.0], cor: '#64748b' }, // esgoto
+  // Elétrica (eletrodutos amarelos)
+  { pos: [1.0, 1.4, 4.05], size: [0.06, 0.06, 3.8], cor: '#facc15' },
+  { pos: [3.5, 1.4, 2.0], size: [7.0, 0.06, 0.06], cor: '#facc15' },
+  { pos: [8, 1.4, 3.0], size: [0.06, 0.06, 2.0], cor: '#facc15' },
+];
+
 /** Deslocamento para centralizar o apartamento na origem. */
 export const CENTER_OFFSET: [number, number, number] = [-APT.width / 2, 0, -APT.depth / 2];
