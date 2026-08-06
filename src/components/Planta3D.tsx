@@ -320,10 +320,10 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX, canUpload 
 
   useEffect(() => {
     getModel3dUrl().then((url) => {
-      if (url) {
-        setModelUrl(url);
-        setModo('real');
-      }
+      // Padrão: a casa Craftsman (mesma da "Casa Realista"). O engenheiro pode
+      // subir o modelo real dele, ou usar a aba "Gerado" (linha do tempo da obra).
+      setModelUrl(url ?? '/modelo-exemplo.gltf');
+      setModo('real');
     });
   }, []);
 
@@ -436,7 +436,8 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX, canUpload 
             )}
 
             {showLights && ROOMS.map((r) => <RoomLight key={r.nome} room={r} />)}
-            {showPins && hotspots.map((h) => <HotspotPin key={h.id} h={h} onOpen={onOpenRaioX} />)}
+            {/* pontos de foto só aparecem com o teto aberto (senão flutuam sobre o telhado) */}
+            {showPins && !teto && hotspots.map((h) => <HotspotPin key={h.id} h={h} onOpen={onOpenRaioX} />)}
           </group>
         )}
 
