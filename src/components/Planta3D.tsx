@@ -11,6 +11,7 @@ import {
   FURNITURE,
   INSTALACOES,
   PHASES,
+  PORCH_COLUMNS,
   ROOMS,
   WALLS,
   WINDOWS,
@@ -107,37 +108,80 @@ function Pipe({ t }: { t: Tubo }) {
   );
 }
 
-/** Telhado: laje + platibanda. */
-function Roof() {
-  const W = APT.width + 0.3;
-  const D = APT.depth + 0.3;
-  const slabY = APT.wallHeight + 0.08;
-  const parapetY = APT.wallHeight + 0.16 + 0.2;
-  const cx = APT.width / 2;
-  const cz = APT.depth / 2;
+/** Telhado de duas águas (Craftsman) sobre a casa fechada. */
+function GableRoof() {
+  const zF = 1.4;
+  const zB = APT.depth; // 8.5
+  const ridgeZ = (zF + zB) / 2;
+  const eaveY = APT.wallHeight;
+  const ridgeY = APT.wallHeight + 1.6;
+  const a = Math.atan2(ridgeY - eaveY, ridgeZ - zF);
+  const slopeLen = Math.hypot(ridgeZ - zF, ridgeY - eaveY) + 0.25;
+  const W = APT.width + 0.8;
+  const xc = APT.width / 2;
+  const telha = '#7a4e39';
+
+  const gable = useMemo(() => {
+    const s = new THREE.Shape();
+    s.moveTo(zF, eaveY);
+    s.lineTo(zB, eaveY);
+    s.lineTo(ridgeZ, ridgeY);
+    s.closePath();
+    return s;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <group>
-      <mesh position={[cx, slabY, cz]} castShadow receiveShadow>
-        <boxGeometry args={[W, 0.16, D]} />
-        <meshStandardMaterial color="#d9d5cd" roughness={0.9} />
+      {/* Águas */}
+      <mesh position={[xc, (eaveY + ridgeY) / 2, (zF + ridgeZ) / 2]} rotation={[-a, 0, 0]} castShadow receiveShadow>
+        <boxGeometry args={[W, 0.16, slopeLen]} />
+        <meshStandardMaterial color={telha} roughness={0.88} />
       </mesh>
-      <mesh position={[cx, parapetY, cz - D / 2]} castShadow>
-        <boxGeometry args={[W, 0.4, 0.12]} />
-        <meshStandardMaterial color="#cfcabf" roughness={0.9} />
+      <mesh position={[xc, (eaveY + ridgeY) / 2, (ridgeZ + zB) / 2]} rotation={[a, 0, 0]} castShadow receiveShadow>
+        <boxGeometry args={[W, 0.16, slopeLen]} />
+        <meshStandardMaterial color={telha} roughness={0.88} />
       </mesh>
-      <mesh position={[cx, parapetY, cz + D / 2]} castShadow>
-        <boxGeometry args={[W, 0.4, 0.12]} />
-        <meshStandardMaterial color="#cfcabf" roughness={0.9} />
-      </mesh>
-      <mesh position={[cx - W / 2, parapetY, cz]} castShadow>
-        <boxGeometry args={[0.12, 0.4, D]} />
-        <meshStandardMaterial color="#cfcabf" roughness={0.9} />
-      </mesh>
-      <mesh position={[cx + W / 2, parapetY, cz]} castShadow>
-        <boxGeometry args={[0.12, 0.4, D]} />
-        <meshStandardMaterial color="#cfcabf" roughness={0.9} />
-      </mesh>
+      {/* Frontões (empenas triangulares) */}
+      {[0.05, APT.width - 0.05].map((x, i) => (
+        <mesh key={i} position={[x, 0, 0]} rotation={[0, -Math.PI / 2, 0]} castShadow>
+          <shapeGeometry args={[gable]} />
+          <meshStandardMaterial color="#9aa0a8" roughness={0.9} side={2} />
+        </mesh>
+      ))}
     </group>
+  );
+}
+
+/** Estrutura da varanda: piso, guarda-corpo e colunas. */
+function Porch() {
+  return (
+    <group>
+      <mesh position={[APT.width / 2, 0.06, APT.porchDepth / 2]} receiveShadow>
+        <boxGeometry args={[APT.width - 0.8, 0.12, APT.porchDepth]} />
+        <meshStandardMaterial color="#8a6d4f" roughness={0.85} />
+      </mesh>
+      <mesh position={[APT.width / 2, 0.5, 0.15]} castShadow>
+        <boxGeometry args={[APT.width - 0.8, 0.8, 0.12]} />
+        <meshStandardMaterial color="#e7e2d6" roughness={0.85} />
+      </mesh>
+      {PORCH_COLUMNS.map((x, i) => (
+        <mesh key={i} position={[x, APT.wallHeight / 2, 0.3]} castShadow>
+          <boxGeometry args={[0.22, APT.wallHeight, 0.22]} />
+          <meshStandardMaterial color="#eef0f2" roughness={0.8} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+/** Telhado da varanda (alpendre). */
+function PorchRoof() {
+  return (
+    <mesh position={[APT.width / 2, APT.wallHeight + 0.1, APT.porchDepth / 2 - 0.1]} castShadow receiveShadow>
+      <boxGeometry args={[APT.width - 0.2, 0.14, APT.porchDepth + 0.5]} />
+      <meshStandardMaterial color="#7a4e39" roughness={0.88} />
+    </mesh>
   );
 }
 
@@ -367,11 +411,17 @@ export default function Planta3D({ hotspots, cronograma, onOpenRaioX, canUpload 
             {showFooting && WALLS.map((seg, i) => <Footing key={i} seg={seg} />)}
             {showFloor && ROOMS.map((r) => <RoomFloor key={r.nome} room={r} />)}
             {showWalls && WALLS.map((seg, i) => <Wall key={i} seg={seg} stage={wallStage} />)}
+            {showWalls && <Porch />}
             {showPipes && INSTALACOES.map((t, i) => <Pipe key={i} t={t} />)}
             {showWindows && WINDOWS.map((j, i) => <WindowPane key={i} j={j} glass={showGlass} />)}
             {showDoors && DOORS.map((d, i) => <DoorLeaf key={i} d={d} />)}
 
-            {showRoof && teto && <Roof />}
+            {showRoof && teto && (
+              <>
+                <GableRoof />
+                <PorchRoof />
+              </>
+            )}
             {showFixtures && ROOMS.map((r) => <CeilingFixture key={r.nome} room={r} lit={fixturesLit} />)}
 
             {showFurniture && (

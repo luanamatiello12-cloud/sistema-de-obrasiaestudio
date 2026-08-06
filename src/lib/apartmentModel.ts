@@ -1,64 +1,65 @@
 /**
- * Modelo geométrico do apartamento (em metros), derivado da mesma planta 2D.
- * Eixos: X = largura (0–12 m), Z = profundidade (0–8 m), Y = altura.
- * A vista 3D centraliza o conjunto na origem deslocando por (-6, 0, -4).
+ * Modelo geométrico da casa (bangalô Craftsman), em metros — a MESMA casa da
+ * planta 2D e da "Casa Realista". Eixos: X = largura (0–11), Z = profundidade
+ * (0–8.5), Y = altura. A frente (varanda) fica em z pequeno.
+ * A vista 3D centraliza deslocando por CENTER_OFFSET.
  */
 
 export const APT = {
-  width: 12, // X
-  depth: 8, // Z
-  wallHeight: 2.6,
-  wallThickness: 0.12,
+  width: 11, // X
+  depth: 8.5, // Z (inclui a varanda frontal)
+  wallHeight: 2.7,
+  wallThickness: 0.14,
+  porchDepth: 1.4, // faixa frontal (z 0 → 1.4) = varanda
 };
 
-/** Segmentos de parede [x1, z1, x2, z2]. Vãos de porta já estão "recortados". */
+/** Segmentos de parede [x1, z1, x2, z2] da casa fechada (atrás da varanda). Vãos já recortados. */
 export const WALLS: [number, number, number, number][] = [
-  // Perímetro externo
-  [0, 0, 12, 0],
-  [0, 8, 12, 8],
-  [0, 0, 0, 8],
-  [12, 0, 12, 8],
+  // Perímetro da casa fechada (frente em z=1.4, atrás da varanda)
+  [0, 1.4, 5.4, 1.4],
+  [6.2, 1.4, 11, 1.4], // frente com vão da porta de entrada
+  [0, 8.5, 11, 8.5], // fundo
+  [0, 1.4, 0, 8.5], // lateral esquerda
+  [11, 1.4, 11, 8.5], // lateral direita
 
-  // Divisória principal (z = 4) com vãos: suíte, banho, quarto
-  [0, 4, 1.4, 4],
-  [2.2, 4, 4.4, 4],
-  [5.2, 4, 8.4, 4],
-  [9.2, 4, 12, 4],
+  // Divisória social/íntima (z = 5.0) com portas: suíte, banho, quarto
+  [0, 5, 1.5, 5],
+  [2.3, 5, 4.6, 5],
+  [5.4, 5, 8, 5],
+  [8.8, 5, 11, 5],
 
-  // Topo: parede sala | cozinha/serviço (x = 8) com passagem
-  [8, 0, 8, 1.6],
-  [8, 2.4, 8, 4],
-  // Cozinha | Área de serviço (z = 2)
-  [8, 2, 9.5, 2],
-  [10.3, 2, 12, 2],
+  // Sala | Hall (x = 4.6) e Hall | Cozinha (x = 7.2), com passagens
+  [4.6, 1.4, 4.6, 3.0],
+  [4.6, 3.8, 4.6, 5],
+  [7.2, 1.4, 7.2, 3.0],
+  [7.2, 3.8, 7.2, 5],
 
-  // Base: suíte | banho (x = 3.5) com porta
-  [3.5, 4, 3.5, 5],
-  [3.5, 5.8, 3.5, 8],
-  // Banho | quarto (x = 6) com porta
-  [6, 4, 6, 6],
-  [6, 6.8, 6, 8],
+  // Suíte | Banho (x = 4.0) e Banho | Quarto (x = 5.8), com portas
+  [4, 5, 4, 5.6],
+  [4, 6.4, 4, 8.5],
+  [5.8, 5, 5.8, 6.4],
+  [5.8, 7.2, 5.8, 8.5],
 ];
 
 export interface Room {
   nome: string;
-  /** Retângulo do piso [x1, z1, x2, z2] */
   rect: [number, number, number, number];
   cor: string;
-  /** Cor do piso acabado (quando o acabamento "Piso" está ligado) */
   piso: string;
 }
 
 export const ROOMS: Room[] = [
-  { nome: 'Sala de Estar', rect: [0, 0, 8, 4], cor: '#4338ca', piso: '#9c6f47' },
-  { nome: 'Cozinha', rect: [8, 0, 12, 2], cor: '#0d9488', piso: '#c9ccd1' },
-  { nome: 'Área de Serviço', rect: [8, 2, 12, 4], cor: '#0369a1', piso: '#b8bcc2' },
-  { nome: 'Suíte', rect: [0, 4, 3.5, 8], cor: '#7c3aed', piso: '#a2764e' },
-  { nome: 'Banho', rect: [3.5, 4, 6, 8], cor: '#be185d', piso: '#cfd3d8' },
-  { nome: 'Quarto', rect: [6, 4, 12, 8], cor: '#b45309', piso: '#9c6f47' },
+  { nome: 'Sala de Estar', rect: [0, 1.4, 4.6, 5], cor: '#4338ca', piso: '#9c6f47' },
+  { nome: 'Hall / Jantar', rect: [4.6, 1.4, 7.2, 5], cor: '#4338ca', piso: '#a2764e' },
+  { nome: 'Cozinha', rect: [7.2, 1.4, 11, 5], cor: '#0d9488', piso: '#c9ccd1' },
+  { nome: 'Suíte', rect: [0, 5, 4, 8.5], cor: '#7c3aed', piso: '#a2764e' },
+  { nome: 'Banho', rect: [4, 5, 5.8, 8.5], cor: '#be185d', piso: '#cfd3d8' },
+  { nome: 'Quarto', rect: [5.8, 5, 11, 8.5], cor: '#b45309', piso: '#9c6f47' },
 ];
 
-/** Peça de mobília: centro (x,z), tamanho (l,a,p), cor e y-base opcional (para itens de parede). */
+/** Colunas da varanda (x) — a frente da casa Craftsman. */
+export const PORCH_COLUMNS: number[] = [0.8, 3.7, 7.3, 10.2];
+
 export interface Piece {
   pos: [number, number];
   size: [number, number, number];
@@ -68,39 +69,30 @@ export interface Piece {
 
 export const FURNITURE: Piece[] = [
   // Sala de Estar
-  { pos: [2, 3.5], size: [2.6, 0.7, 0.95], cor: '#3f4b5b' }, // sofá
-  { pos: [2.4, 2.4], size: [1.2, 0.35, 0.6], cor: '#6b4f34' }, // mesa de centro
-  { pos: [2.4, 2.5], size: [3, 0.02, 2], cor: '#8a6d4f', y: 0.03 }, // tapete
-  { pos: [5, 0.22], size: [1.8, 0.7, 0.12], cor: '#1f2937', y: 1.2 }, // painel de TV
+  { pos: [2.3, 4.4], size: [2.4, 0.7, 0.9], cor: '#3f4b5b' }, // sofá
+  { pos: [2.3, 3.2], size: [2.8, 0.02, 1.8], cor: '#8a6d4f', y: 0.03 }, // tapete
+  { pos: [2.3, 3.2], size: [1.0, 0.35, 0.5], cor: '#6b4f34' }, // mesa de centro
+  { pos: [2.3, 1.6], size: [1.8, 0.7, 0.12], cor: '#1f2937', y: 1.2 }, // painel de TV
+  // Hall / Jantar
+  { pos: [5.9, 3.2], size: [1.3, 0.74, 0.85], cor: '#5b4636' }, // mesa
+  { pos: [5.9, 2.55], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' },
+  { pos: [5.9, 3.85], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' },
   // Cozinha
-  { pos: [10, 0.4], size: [3.4, 0.9, 0.6], cor: '#475569' }, // bancada
-  { pos: [10, 0.32], size: [3.4, 0.6, 0.32], cor: '#e2e8f0', y: 1.95 }, // armários superiores
-  // Área de Serviço
-  { pos: [11.4, 3.5], size: [0.6, 0.9, 0.6], cor: '#e5e7eb' }, // máquina/tanque
+  { pos: [9.1, 4.6], size: [3.4, 0.9, 0.6], cor: '#475569' }, // bancada
+  { pos: [9.1, 4.68], size: [3.4, 0.6, 0.32], cor: '#e2e8f0', y: 1.95 }, // armários
   // Suíte
-  { pos: [1.75, 6.3], size: [1.7, 0.5, 2.1], cor: '#cbd5e1' }, // cama
-  { pos: [1.75, 7.45], size: [1.9, 0.9, 0.15], cor: '#5b4636' }, // cabeceira
-  { pos: [0.45, 5], size: [0.55, 2.2, 1.6], cor: '#6b5844' }, // guarda-roupa
+  { pos: [1.9, 6.9], size: [1.7, 0.5, 2.1], cor: '#cbd5e1' }, // cama
+  { pos: [1.9, 8.05], size: [1.9, 0.9, 0.15], cor: '#5b4636' }, // cabeceira
+  { pos: [0.5, 5.6], size: [0.55, 2.2, 1.6], cor: '#6b5844' }, // guarda-roupa
   // Banho
-  { pos: [3.95, 7.5], size: [0.45, 0.45, 0.65], cor: '#f8fafc' }, // vaso
-  { pos: [5.5, 7.55], size: [0.8, 0.85, 0.5], cor: '#e2e8f0' }, // gabinete/pia
+  { pos: [4.4, 8.1], size: [0.45, 0.45, 0.65], cor: '#f8fafc' }, // vaso
+  { pos: [5.3, 8.15], size: [0.8, 0.85, 0.5], cor: '#e2e8f0' }, // pia
   // Quarto
-  { pos: [8, 6.5], size: [1.9, 0.5, 2.2], cor: '#cbd5e1' }, // cama
-  { pos: [8, 7.75], size: [2.1, 0.95, 0.15], cor: '#5b4636' }, // cabeceira
-  { pos: [11.4, 6], size: [0.55, 2.2, 2.2], cor: '#6b5844' }, // guarda-roupa
-  { pos: [7, 4.5], size: [1.3, 0.75, 0.55], cor: '#4b5563' }, // escrivaninha
-  { pos: [6.7, 7.5], size: [0.5, 0.5, 0.5], cor: '#6b5844' }, // criado-mudo quarto
-  // Sala — jantar
-  { pos: [6.6, 1.5], size: [1.3, 0.74, 0.85], cor: '#5b4636' }, // mesa de jantar
-  { pos: [6.6, 0.85], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' }, // cadeira
-  { pos: [6.6, 2.15], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' }, // cadeira
-  { pos: [5.9, 1.5], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' }, // cadeira
-  { pos: [7.3, 1.5], size: [0.42, 0.9, 0.42], cor: '#3f4b5b' }, // cadeira
-  // Suíte — criado-mudo
-  { pos: [0.5, 7.4], size: [0.5, 0.5, 0.5], cor: '#6b5844' },
+  { pos: [8.4, 6.9], size: [1.9, 0.5, 2.1], cor: '#cbd5e1' }, // cama
+  { pos: [8.4, 8.05], size: [2.1, 0.9, 0.15], cor: '#5b4636' }, // cabeceira
+  { pos: [10.4, 6.5], size: [0.55, 2.2, 2.0], cor: '#6b5844' }, // guarda-roupa
 ];
 
-/** Janela de vidro em parede externa. axis 'x' = parede corre em X (frente/fundo); 'z' = laterais. */
 export interface Janela {
   pos: [number, number];
   w: number;
@@ -110,13 +102,14 @@ export interface Janela {
 }
 
 export const WINDOWS: Janela[] = [
-  { pos: [3.5, 0], w: 2.2, h: 1.15, sill: 1.0, axis: 'x' }, // sala (frente)
-  { pos: [10.2, 0], w: 1.6, h: 1.15, sill: 1.0, axis: 'x' }, // cozinha (frente)
-  { pos: [0, 6], w: 2.2, h: 1.15, sill: 1.0, axis: 'z' }, // suíte (lateral esquerda)
-  { pos: [12, 6.2], w: 1.8, h: 1.15, sill: 1.0, axis: 'z' }, // quarto (lateral direita)
+  { pos: [2.3, 1.4], w: 1.8, h: 1.2, sill: 0.9, axis: 'x' }, // sala (frente)
+  { pos: [9.0, 1.4], w: 1.6, h: 1.2, sill: 0.9, axis: 'x' }, // cozinha (frente)
+  { pos: [0, 3.0], w: 1.6, h: 1.2, sill: 0.9, axis: 'z' }, // sala (lateral esq)
+  { pos: [0, 6.7], w: 1.8, h: 1.2, sill: 0.9, axis: 'z' }, // suíte (lateral esq)
+  { pos: [11, 6.7], w: 1.8, h: 1.2, sill: 0.9, axis: 'z' }, // quarto (lateral dir)
+  { pos: [8.4, 8.5], w: 1.6, h: 1.2, sill: 0.9, axis: 'x' }, // quarto (fundo)
 ];
 
-/** Porta com dobradiça no ponto `hinge`, entreaberta em `swing` radianos. */
 export interface Porta {
   hinge: [number, number];
   w: number;
@@ -125,19 +118,19 @@ export interface Porta {
 }
 
 export const DOORS: Porta[] = [
-  { hinge: [1.4, 4], w: 0.8, axis: 'x', swing: -0.6 }, // suíte
-  { hinge: [4.4, 4], w: 0.8, axis: 'x', swing: -0.6 }, // banho
-  { hinge: [8.4, 4], w: 0.8, axis: 'x', swing: -0.6 }, // quarto
-  { hinge: [8, 1.6], w: 0.8, axis: 'z', swing: 0.6 }, // cozinha
-  { hinge: [6, 6], w: 0.8, axis: 'z', swing: -0.6 }, // banho ↔ quarto
+  { hinge: [5.4, 1.4], w: 0.8, axis: 'x', swing: -0.6 }, // entrada
+  { hinge: [4.6, 3.0], w: 0.8, axis: 'z', swing: 0.6 }, // sala ↔ hall
+  { hinge: [7.2, 3.0], w: 0.8, axis: 'z', swing: -0.6 }, // hall ↔ cozinha
+  { hinge: [1.5, 5], w: 0.8, axis: 'x', swing: 0.6 }, // suíte
+  { hinge: [4.6, 5], w: 0.8, axis: 'x', swing: 0.6 }, // banho
+  { hinge: [8, 5], w: 0.8, axis: 'x', swing: 0.6 }, // quarto
 ];
 
-/** Fases da obra, na ordem em que o cliente acompanha a construção. */
 export const PHASES = [
   { nome: 'Terreno', desc: 'Terreno preparado e nivelado' },
   { nome: 'Fundação', desc: 'Sapatas, baldrame e contrapiso' },
   { nome: 'Alvenaria', desc: 'Paredes erguidas em blocos' },
-  { nome: 'Cobertura', desc: 'Laje e telhado executados' },
+  { nome: 'Cobertura', desc: 'Telhado de duas águas e varanda' },
   { nome: 'Instalações', desc: 'Hidráulica e elétrica embutidas' },
   { nome: 'Reboco & Gesso', desc: 'Paredes rebocadas e forro' },
   { nome: 'Contrapiso & Piso', desc: 'Pisos assentados' },
@@ -145,7 +138,6 @@ export const PHASES = [
   { nome: 'Acabamento', desc: 'Marcenaria, mobília e entrega' },
 ] as const;
 
-/** Tubos/eletrodutos das instalações (fase 4), simplificados. */
 export interface Tubo {
   pos: [number, number, number];
   size: [number, number, number];
@@ -153,20 +145,17 @@ export interface Tubo {
 }
 
 export const INSTALACOES: Tubo[] = [
-  // Hidráulica cozinha (azul = fria, vermelho = quente) + ralo
-  { pos: [10, 0.5, 0.35], size: [3.2, 0.07, 0.07], cor: '#38bdf8' },
-  { pos: [10, 0.62, 0.35], size: [3.2, 0.06, 0.06], cor: '#f87171' },
-  { pos: [11.6, 0.5, 0.35], size: [0.07, 1.0, 0.07], cor: '#38bdf8' },
+  // Hidráulica cozinha
+  { pos: [9.1, 0.5, 4.85], size: [3.0, 0.07, 0.07], cor: '#38bdf8' },
+  { pos: [9.1, 0.62, 4.85], size: [3.0, 0.06, 0.06], cor: '#f87171' },
+  { pos: [10.6, 0.5, 4.85], size: [0.07, 1.0, 0.07], cor: '#38bdf8' },
   // Hidráulica banho
-  { pos: [4.6, 0.5, 7.5], size: [2.3, 0.07, 0.07], cor: '#38bdf8' },
-  { pos: [4.6, 0.62, 7.5], size: [2.3, 0.06, 0.06], cor: '#f87171' },
-  { pos: [4.0, 0.5, 7.5], size: [0.07, 1.0, 0.07], cor: '#38bdf8' },
-  { pos: [4.0, 0.12, 6.5], size: [0.11, 0.11, 2.0], cor: '#64748b' }, // esgoto
-  // Elétrica (eletrodutos amarelos)
-  { pos: [1.0, 1.4, 4.05], size: [0.06, 0.06, 3.8], cor: '#facc15' },
-  { pos: [3.5, 1.4, 2.0], size: [7.0, 0.06, 0.06], cor: '#facc15' },
-  { pos: [8, 1.4, 3.0], size: [0.06, 0.06, 2.0], cor: '#facc15' },
+  { pos: [4.9, 0.5, 8.1], size: [1.6, 0.07, 0.07], cor: '#38bdf8' },
+  { pos: [4.9, 0.62, 8.1], size: [1.6, 0.06, 0.06], cor: '#f87171' },
+  { pos: [4.4, 0.12, 7.2], size: [0.11, 0.11, 1.8], cor: '#64748b' }, // esgoto
+  // Elétrica
+  { pos: [0.9, 1.4, 4.95], size: [0.06, 0.06, 3.4], cor: '#facc15' },
+  { pos: [3.5, 1.4, 3.0], size: [6.5, 0.06, 0.06], cor: '#facc15' },
 ];
 
-/** Deslocamento para centralizar o apartamento na origem. */
 export const CENTER_OFFSET: [number, number, number] = [-APT.width / 2, 0, -APT.depth / 2];

@@ -14,7 +14,7 @@ import type {
  * fique 100% navegável e apresentável sem depender de servidor.
  */
 
-const KEY = 'gp_obra_demo_db_v3';
+const KEY = 'gp_obra_demo_db_v4';
 
 export type TableName =
   | 'chat_mensagens'
@@ -88,10 +88,10 @@ function seed(): DB {
       { id: 4, material: 'Spots de LED embutir 7W', quantidade: '24 un', urgencia: 'critica', status: 'pendente', created_at: hoursAgo(6) },
     ],
     pontos_tecnicos: [
-      { id: 1, nome_comodo: 'Sala de Estar', url_foto_interna: roomPhoto('1586023492125-27b2c045efd7'), pos_x: 29, pos_y: 30 },
-      { id: 2, nome_comodo: 'Cozinha', url_foto_interna: roomPhoto('1556911220-bff31c812dba'), pos_x: 72, pos_y: 22 },
-      { id: 3, nome_comodo: 'Suíte', url_foto_interna: roomPhoto('1616594039964-ae9021a400a0'), pos_x: 19, pos_y: 70 },
-      { id: 4, nome_comodo: 'Quarto', url_foto_interna: roomPhoto('1522771739844-6a9f6d5f14af'), pos_x: 72, pos_y: 72 },
+      { id: 1, nome_comodo: 'Sala de Estar', url_foto_interna: roomPhoto('1586023492125-27b2c045efd7'), pos_x: 22, pos_y: 38 },
+      { id: 2, nome_comodo: 'Cozinha', url_foto_interna: roomPhoto('1556911220-bff31c812dba'), pos_x: 80, pos_y: 38 },
+      { id: 3, nome_comodo: 'Suíte', url_foto_interna: roomPhoto('1616594039964-ae9021a400a0'), pos_x: 20, pos_y: 76 },
+      { id: 4, nome_comodo: 'Quarto', url_foto_interna: roomPhoto('1522771739844-6a9f6d5f14af'), pos_x: 78, pos_y: 76 },
     ],
     chat_mensagens: [
       // Canal geral (todos veem)

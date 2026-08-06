@@ -2,28 +2,30 @@
   <defs>
     <style>
       .pipe { stroke: #38bdf8; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: none; filter: drop-shadow(0 0 4px #38bdf8); }
-      .pipe-hot { stroke: #f87171; stroke-width: 4; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 4px #f87171); }
+      .hot  { stroke: #f87171; stroke-width: 4; stroke-linecap: round; fill: none; filter: drop-shadow(0 0 4px #f87171); }
       .node { fill: #38bdf8; filter: drop-shadow(0 0 5px #38bdf8); }
-      .tag { fill: #7dd3fc; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; }
+      .tag  { fill: #7dd3fc; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; }
     </style>
   </defs>
 
-  <!-- Coluna de água fria -->
-  <path class="pipe" d="M620 100 L620 470 L320 470 L320 380" />
-  <path class="pipe" d="M620 300 L680 300 L680 350" />
-  <path class="pipe" d="M320 470 L150 470 L150 400" />
+  <!-- Coluna / cozinha (canto superior direito) -->
+  <path class="pipe" d="M700 150 L700 300 L560 300" />
+  <path class="hot"  d="M712 150 L712 312 L560 312" />
+  <circle cx="560" cy="300" r="6" class="node" />
+  <text x="500" y="295" class="tag">Cozinha</text>
 
-  <!-- Água quente -->
-  <path class="pipe-hot" d="M600 110 L600 460 L330 460 L330 385" />
+  <!-- Banho (inferior meio) -->
+  <path class="pipe" d="M700 150 L700 470 L360 470" />
+  <path class="hot"  d="M712 470 L360 470" />
+  <circle cx="360" cy="470" r="6" class="node" />
+  <text x="320" y="460" class="tag">Banho</text>
+  <!-- esgoto -->
+  <path class="pipe" d="M340 470 L340 540" stroke="#64748b" />
 
-  <!-- Pontos hidráulicos -->
-  <circle cx="620" cy="100" r="6" class="node" />
-  <circle cx="680" cy="350" r="6" class="node" />
-  <circle cx="320" cy="380" r="6" class="node" />
-  <circle cx="150" cy="400" r="6" class="node" />
+  <!-- Suíte (lavabo/pia) -->
+  <path class="pipe" d="M360 470 L200 470 L200 430" />
+  <circle cx="200" cy="430" r="6" class="node" />
+  <text x="160" y="425" class="tag">Suíte</text>
 
-  <text x="630" y="95" class="tag">Coluna AF/AQ</text>
-  <text x="690" y="355" class="tag">Tanque</text>
-  <text x="290" y="375" class="tag">Chuveiro</text>
-  <text x="120" y="395" class="tag">Suíte</text>
+  <text x="710" y="145" class="tag">Coluna AF/AQ</text>
 </svg>

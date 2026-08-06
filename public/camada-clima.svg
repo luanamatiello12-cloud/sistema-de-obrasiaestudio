@@ -4,36 +4,30 @@
       .duct { stroke: #34d399; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.85; filter: drop-shadow(0 0 5px #34d399); }
       .unit { fill: none; stroke: #6ee7b7; stroke-width: 3; filter: drop-shadow(0 0 5px #34d399); }
       .flow { stroke: #a7f3d0; stroke-width: 2; stroke-dasharray: 4 6; fill: none; }
-      .tag { fill: #6ee7b7; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; }
+      .tag  { fill: #6ee7b7; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; }
     </style>
   </defs>
 
-  <!-- Condensadora (área de serviço) -->
-  <rect x="670" y="250" width="40" height="26" rx="4" class="unit" />
-  <text x="655" y="245" class="tag">Condensadora</text>
+  <!-- Condensadora (fundo direito) -->
+  <rect x="680" y="500" width="40" height="26" rx="4" class="unit" />
+  <text x="662" y="495" class="tag">Condensadora</text>
 
-  <!-- Tubulação frigorígena -->
-  <path class="duct" d="M690 250 L690 160 L230 160" />          <!-- ramo Sala -->
-  <path class="duct" d="M690 276 L690 430 L575 430" />          <!-- ramo Quarto -->
-  <path class="duct" d="M690 430 L150 430" />                    <!-- ramo Suíte -->
+  <!-- Tubulação -->
+  <path class="duct" d="M700 500 L700 220 L232 220" />       <!-- ramo Sala -->
+  <path class="duct" d="M700 500 L620 500 L620 460" />       <!-- ramo Quarto -->
+  <path class="duct" d="M700 500 L220 500 L220 460" />       <!-- ramo Suíte -->
 
   <!-- Evaporadoras (splits) -->
-  <rect x="200" y="150" width="60" height="16" rx="8" class="unit" />
-  <rect x="545" y="422" width="60" height="16" rx="8" class="unit" />
-  <rect x="120" y="410" width="60" height="16" rx="8" class="unit" />
+  <rect x="172" y="212" width="60" height="16" rx="8" class="unit" />
+  <rect x="549" y="452" width="60" height="16" rx="8" class="unit" />
+  <rect x="190" y="452" width="60" height="16" rx="8" class="unit" />
 
-  <!-- Exaustor do banheiro (ventilação, não é ar-condicionado) -->
-  <circle cx="320" cy="410" r="13" class="unit" />
-  <path class="unit" d="M320 400 L320 420 M310 410 L330 410 M313 403 L327 417 M327 403 L313 417" stroke-width="2" />
+  <!-- Exaustor do banheiro -->
+  <circle cx="363" cy="450" r="13" class="unit" />
+  <path class="unit" d="M363 440 L363 460 M353 450 L373 450 M356 443 L370 457 M370 443 L356 457" stroke-width="2" />
 
-  <!-- Fluxo de ar -->
-  <path class="flow" d="M210 175 Q230 195 250 175" />
-  <path class="flow" d="M555 447 Q575 467 595 447" />
-  <path class="flow" d="M130 435 Q150 455 170 435" />
-  <path class="flow" d="M320 393 L320 378" />
-
-  <text x="200" y="140" class="tag">Split Sala 12.000 BTU</text>
-  <text x="520" y="415" class="tag">Split Quarto 9.000 BTU</text>
-  <text x="112" y="403" class="tag">Split Suíte 9.000 BTU</text>
-  <text x="288" y="445" class="tag">Exaustor Banho</text>
+  <text x="172" y="205" class="tag">Split Sala 12.000</text>
+  <text x="525" y="445" class="tag">Split Quarto 9.000</text>
+  <text x="182" y="445" class="tag">Split Suíte 9.000</text>
+  <text x="332" y="485" class="tag">Exaustor Banho</text>
 </svg>
